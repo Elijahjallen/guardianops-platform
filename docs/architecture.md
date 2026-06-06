@@ -163,3 +163,28 @@ GuardianOps will implement:
 * Secure API access
 * MFA support
 * Environment-based secrets management
+
+---
+
+# High-Level System Architecture
+
+## Architecture Overview
+
+GuardianOps will use a full-stack web application architecture.
+
+The browser-based frontend will be built with React and TypeScript. The frontend will communicate with a Python FastAPI backend through secure REST API endpoints. The backend will handle authentication, authorization, business logic, case workflows, quote calculations, notifications, and database operations.
+
+PostgreSQL will be used as the primary relational database. AWS will be used for future hosting, file storage, monitoring, and deployment.
+
+## Architecture Flow
+
+```text
+User Browser
+    ↓
+React + TypeScript Frontend
+    ↓
+FastAPI Backend API
+    ↓
+PostgreSQL Database
+    ↓
+AWS Cloud Infrastructure
