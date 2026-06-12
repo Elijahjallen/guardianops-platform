@@ -8,9 +8,34 @@ import emailIcon from "../assets/icons/email-icon.svg";
 import lockIcon from "../assets/icons/lock-icon.svg";
 
 function LoginPage() {
-  const [selectedRole, setSelectedRole] = useState<"parent" | "employee">(
-    "parent"
-  );
+  const [selectedRole, setSelectedRole] = useState<"parent" | "employee">("parent");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  function handleSignIn() {
+    setErrorMessage("");
+
+    if (!email.trim()) {
+      setErrorMessage("Email address is required.");
+      return;
+    }
+
+    if (!password.trim()) {
+      setErrorMessage("Password is required.");
+      return;
+    }
+
+    console.log({
+      selectedRole,
+      email,
+      password,
+      rememberMe,
+    });
+
+    alert(`Signing in as ${selectedRole}`);
+  }
 
   return (
     <main className="min-h-screen bg-slate-100 p-3">
@@ -49,6 +74,12 @@ function LoginPage() {
               </div>
             </div>
 
+            {errorMessage && (
+              <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700">
+                {errorMessage}
+              </div>
+            )}
+
             <form className="mt-8">
               <label className="mb-2 block font-bold text-slate-950">
                 Email Address
@@ -59,6 +90,8 @@ function LoginPage() {
 
                 <input
                   type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                   placeholder="Enter your email"
                   className="w-full text-lg outline-none placeholder:text-slate-400"
                 />
@@ -73,6 +106,8 @@ function LoginPage() {
 
                 <input
                   type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
                   placeholder="Enter your password"
                   className="w-full text-lg outline-none placeholder:text-slate-400"
                 />
@@ -80,7 +115,12 @@ function LoginPage() {
 
               <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <label className="flex items-center gap-3 text-lg font-semibold text-slate-950">
-                  <input type="checkbox" className="h-5 w-5" />
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                    className="h-5 w-5"
+                  />
                   Remember me
                 </label>
 
@@ -94,6 +134,7 @@ function LoginPage() {
 
               <button
                 type="button"
+                onClick={handleSignIn}
                 className="mt-7 h-16 w-full rounded-xl bg-blue-600 text-xl font-bold text-white shadow-md transition hover:bg-blue-700"
               >
                 Sign In
