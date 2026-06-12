@@ -1,4 +1,8 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import DashboardLayout from "../components/dashboard/DashboardLayout";
+import NewCaseModal from "../components/cases/NewCaseModal";
 
 const cases = [
   {
@@ -40,17 +44,24 @@ const cases = [
 ];
 
 function CasesPage() {
+  const navigate = useNavigate();
+  const [isNewCaseOpen, setIsNewCaseOpen] = useState(false);
+
   return (
     <DashboardLayout>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-slate-950">Cases</h1>
+
           <p className="mt-2 text-slate-500">
             Manage transport cases, assignments, statuses, and case activity.
           </p>
         </div>
 
-        <button className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700">
+        <button
+          onClick={() => setIsNewCaseOpen(true)}
+          className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700"
+        >
           + New Case
         </button>
       </div>
@@ -106,17 +117,13 @@ function CasesPage() {
                     {item.id}
                   </td>
 
-                  <td className="px-6 py-5 text-slate-700">
-                    {item.client}
-                  </td>
+                  <td className="px-6 py-5 text-slate-700">{item.client}</td>
 
                   <td className="px-6 py-5">
                     <StatusBadge status={item.status} />
                   </td>
 
-                  <td className="px-6 py-5 text-slate-700">
-                    {item.staff}
-                  </td>
+                  <td className="px-6 py-5 text-slate-700">{item.staff}</td>
 
                   <td className="px-6 py-5 text-slate-700">
                     {item.destination}
@@ -131,7 +138,10 @@ function CasesPage() {
                   </td>
 
                   <td className="px-6 py-5">
-                    <button className="font-bold text-blue-600 hover:text-blue-700">
+                    <button
+                      onClick={() => navigate(`/cases/${item.id}`)}
+                      className="font-bold text-blue-600 hover:text-blue-700"
+                    >
                       View Case
                     </button>
                   </td>
@@ -141,6 +151,11 @@ function CasesPage() {
           </table>
         </div>
       </section>
+
+      <NewCaseModal
+        isOpen={isNewCaseOpen}
+        onClose={() => setIsNewCaseOpen(false)}
+      />
     </DashboardLayout>
   );
 }
