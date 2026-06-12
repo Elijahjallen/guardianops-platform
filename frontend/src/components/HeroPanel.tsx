@@ -17,22 +17,26 @@ function HeroPanel() {
     >
       <div className="absolute inset-0 bg-slate-950/15" />
 
-      <div className="relative z-10 flex h-full flex-col items-center px-12 py-10">
+      <div className="relative z-10 flex h-full flex-col items-center justify-center px-12 py-10">
+        {/* Logo */}
         <img
           src={guardianLogo}
           alt="GuardianOps Logo"
           className="mb-4 w-32"
         />
 
+        {/* Company Name */}
         <h1 className="text-center text-5xl font-extrabold tracking-tight text-slate-950 drop-shadow-sm">
           GUARDIAN<span className="text-amber-400">OPS</span>
         </h1>
 
+        {/* Tagline */}
         <p className="mt-2 text-2xl font-extrabold text-slate-950">
           Secure Transport. Trusted Care.
         </p>
 
-        <div className="mt-auto mb-20 w-full max-w-md space-y-6">
+        {/* Features */}
+        <div className="mt-20 w-full max-w-md space-y-8">
           <FeatureItem
             icon={shieldCheckIcon}
             title="Secure"
@@ -52,13 +56,17 @@ function HeroPanel() {
           />
         </div>
 
+        {/* Bottom Security Notice */}
         <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-3 text-sm font-semibold text-white">
           <img
             src={securityLockIcon}
             alt="Security Lock"
             className="h-9 w-9 object-contain"
           />
-          <span>Your data is protected with bank level encryption</span>
+
+          <span>
+            Your data is protected with bank level encryption
+          </span>
         </div>
       </div>
     </section>
@@ -71,14 +79,27 @@ type FeatureItemProps = {
   description: string;
 };
 
-function FeatureItem({ icon, title, description }: FeatureItemProps) {
+function FeatureItem({
+  icon,
+  title,
+  description,
+}: FeatureItemProps) {
   return (
     <div className="flex items-start gap-4">
-      <img src={icon} alt="" className="h-14 w-14 shrink-0 object-contain" />
+      <img
+        src={icon}
+        alt=""
+        className="h-14 w-14 shrink-0 object-contain"
+      />
 
       <div>
-        <h3 className="text-xl font-bold text-white">{title}</h3>
-        <p className="mt-1 text-sm leading-5 text-white">{description}</p>
+        <h3 className="text-xl font-bold text-white">
+          {title}
+        </h3>
+
+        <p className="mt-1 text-sm leading-5 text-white">
+          {description}
+        </p>
       </div>
     </div>
   );
