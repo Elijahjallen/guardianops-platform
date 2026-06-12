@@ -3,18 +3,47 @@ import { useNavigate } from "react-router-dom";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import NewCaseModal from "../components/cases/NewCaseModal";
-import { useCaseStore } from "../store/caseStore";
+import { useCaseStore, type CaseStatus } from "../store/caseStore";
+
+const filters: ("All" | CaseStatus)[] = [
+  "All",
+  "En Route",
+  "Scheduled",
+  "Pending",
+  "In Progress",
+  "Completed",
+  "Cancelled",
+];
 
 function CasesPage() {
   const navigate = useNavigate();
   const cases = useCaseStore((state) => state.cases);
+
   const [isNewCaseOpen, setIsNewCaseOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState<"All" | CaseStatus>(
+    "All"
+  );
+
+  const filteredCases = cases.filter((item) => {
+    const matchesSearch =
+      item.id.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.client.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.staff.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.destination.toLowerCase().includes(searchText.toLowerCase());
+
+    const matchesFilter =
+      selectedFilter === "All" || item.status === selectedFilter;
+
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <DashboardLayout>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-slate-950">Cases</h1>
+
           <p className="mt-2 text-slate-500">
             Manage transport cases, assignments, statuses, and case activity.
           </p>
@@ -32,25 +61,26 @@ function CasesPage() {
         <div className="flex flex-col gap-4 border-b border-slate-200 p-6 xl:flex-row xl:items-center xl:justify-between">
           <input
             type="text"
-            placeholder="Search by case number, client, destination..."
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            placeholder="Search by case number, client, staff, destination..."
             className="w-full rounded-xl border border-slate-300 px-5 py-3 outline-none xl:max-w-xl"
           />
 
           <div className="flex flex-wrap gap-3">
-            {["All", "En Route", "Scheduled", "Pending", "Completed"].map(
-              (filter) => (
-                <button
-                  key={filter}
-                  className={`rounded-xl px-4 py-2 font-semibold ${
-                    filter === "All"
-                      ? "bg-blue-600 text-white"
-                      : "border border-slate-300 text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  {filter}
-                </button>
-              )
-            )}
+            {filters.map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setSelectedFilter(filter)}
+                className={`rounded-xl px-4 py-2 font-semibold ${
+                  selectedFilter === filter
+                    ? "bg-blue-600 text-white"
+                    : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -70,7 +100,7 @@ function CasesPage() {
             </thead>
 
             <tbody>
-              {cases.map((item) => (
+              {filteredCases.map((item) => (
                 <tr
                   key={item.id}
                   className="border-t border-slate-100 hover:bg-slate-50"
@@ -78,20 +108,27 @@ function CasesPage() {
                   <td className="px-6 py-5 font-bold text-slate-950">
                     {item.id}
                   </td>
+
                   <td className="px-6 py-5 text-slate-700">{item.client}</td>
+
                   <td className="px-6 py-5">
                     <StatusBadge status={item.status} />
                   </td>
+
                   <td className="px-6 py-5 text-slate-700">{item.staff}</td>
+
                   <td className="px-6 py-5 text-slate-700">
                     {item.destination}
                   </td>
+
                   <td className="px-6 py-5 text-slate-700">
                     {item.pickupDate}
                   </td>
+
                   <td className="px-6 py-5 text-slate-700">
                     {item.lastUpdate}
                   </td>
+
                   <td className="px-6 py-5">
                     <button
                       onClick={() => navigate(`/cases/${item.id}`)}
@@ -104,6 +141,12 @@ function CasesPage() {
               ))}
             </tbody>
           </table>
+
+          {filteredCases.length === 0 && (
+            <div className="p-8 text-center font-semibold text-slate-500">
+              No cases match your search or filter.
+            </div>
+          )}
         </div>
       </section>
 
