@@ -1,4 +1,5 @@
 import { useCaseStore } from "../../store/caseStore";
+import { useStaffStore } from "../../store/staffStore";
 
 import CasesIcon from "../../assets/icons/Cases-Icon.svg";
 import PendingQuotesIcon from "../../assets/icons/Pending-Quotes-Icon.svg";
@@ -10,9 +11,13 @@ import DownArrowIcon from "../../assets/icons/Down-Arrow-Notifications.svg";
 
 function QuickStats() {
   const cases = useCaseStore((state) => state.cases);
+  const staff = useStaffStore((state) => state.staff);
 
   const activeCases = cases.length;
   const pendingCases = cases.filter((item) => item.status === "Pending").length;
+  const activeStaff = staff.filter(
+    (member) => member.status === "Available" || member.status === "En Route"
+  ).length;
 
   const stats = [
     {
@@ -33,7 +38,7 @@ function QuickStats() {
     },
     {
       title: "Field Staff Active",
-      value: "12",
+      value: activeStaff.toString(),
       change: "5",
       direction: "up",
       icon: FieldStaffIcon,
