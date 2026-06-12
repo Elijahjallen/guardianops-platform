@@ -9,7 +9,7 @@ import securityLockIcon from "../assets/icons/security-lock.svg";
 function HeroPanel() {
   return (
     <section
-      className="relative hidden min-h-screen w-1/2 overflow-hidden bg-cover lg:block"
+      className="relative hidden min-h-screen w-[52%] overflow-hidden bg-cover lg:block"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundPosition: "20% center",

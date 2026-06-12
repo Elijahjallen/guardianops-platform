@@ -17,20 +17,20 @@ function LoginPage() {
       <div className="flex min-h-[calc(100vh-24px)] overflow-hidden rounded-[40px] bg-white shadow-sm">
         <HeroPanel />
 
-        <section className="flex w-full items-center justify-center bg-slate-100 px-6 py-6 lg:w-1/2">
-          <div className="w-full max-w-[760px] rounded-[32px] bg-white px-14 py-12 shadow-xl">
-            <h2 className="text-5xl font-extrabold tracking-tight text-slate-950">
+        <section className="flex w-full items-center justify-center bg-slate-100 px-4 sm:px-6 lg:w-[48%]">
+          <div className="w-full max-w-[900px] rounded-[32px] bg-white px-8 py-12 shadow-xl sm:px-10 lg:px-14">
+            <h2 className="text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">
               Welcome Back
             </h2>
 
-            <p className="mt-3 text-xl text-slate-700">
+            <p className="mt-3 text-lg text-slate-700 sm:text-xl">
               Sign in to your GuardianOps Account
             </p>
 
             <div className="mt-8">
               <p className="mb-3 font-bold text-slate-950">Login as</p>
 
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <RoleButton
                   title="Customer / Parent"
                   subtitle="View your case updates"
@@ -78,7 +78,7 @@ function LoginPage() {
                 />
               </div>
 
-              <div className="mt-5 flex items-center justify-between">
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <label className="flex items-center gap-3 text-lg font-semibold text-slate-950">
                   <input type="checkbox" className="h-5 w-5" />
                   Remember me
@@ -86,7 +86,7 @@ function LoginPage() {
 
                 <button
                   type="button"
-                  className="text-lg font-bold text-blue-600 hover:text-blue-700"
+                  className="text-left text-lg font-bold text-blue-600 hover:text-blue-700 sm:text-right"
                 >
                   Forgot Password?
                 </button>
@@ -152,7 +152,7 @@ function RoleButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-28 items-center justify-between rounded-xl border px-6 text-left transition ${
+      className={`flex min-h-28 items-center justify-between rounded-xl border px-6 py-4 text-left transition ${
         active
           ? "border-blue-600 bg-blue-50"
           : "border-slate-300 bg-white hover:bg-slate-50"
