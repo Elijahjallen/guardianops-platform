@@ -1,32 +1,32 @@
-import DashboardLayout from "../layouts/DashboardLayout";
-import ActiveCasesTable from "../components/ActiveCasesTable";
+import DashboardLayout from "../components/dashboard/DashboardLayout";
+import QuickStats from "../components/dashboard/QuickStats";
+import ActiveCasesTable from "../components/dashboard/ActiveCasesTable";
+import RecentAlerts from "../components/dashboard/RecentAlerts";
+import QuickActions from "../components/dashboard/QuickActions";
+import CaseStatusOverview from "../components/dashboard/CaseStatusOverview";
+import UpcomingPickups from "../components/dashboard/UpcomingPickups";
+import FieldStaffStatus from "../components/dashboard/FieldStaffStatus";
 
 function DashboardPage() {
   return (
     <DashboardLayout>
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Active Cases" value="14" />
-        <MetricCard title="Pending Quotes" value="6" />
-        <MetricCard title="Field Staff Active" value="8" />
-        <MetricCard title="Open Expenses" value="$4,280" />
+      <QuickStats />
+
+      <div className="mt-6 grid items-stretch gap-6 2xl:grid-cols-[minmax(0,1fr)_320px]">
+        <ActiveCasesTable />
+
+        <aside className="grid h-full grid-rows-[1fr_auto] gap-6">
+          <RecentAlerts />
+          <QuickActions />
+        </aside>
       </div>
 
-      <ActiveCasesTable />
+      <div className="mt-6 grid gap-6 2xl:grid-cols-3">
+        <CaseStatusOverview />
+        <UpcomingPickups />
+        <FieldStaffStatus />
+      </div>
     </DashboardLayout>
-  );
-}
-
-type MetricCardProps = {
-  title: string;
-  value: string;
-};
-
-function MetricCard({ title, value }: MetricCardProps) {
-  return (
-    <div className="rounded-3xl bg-white p-6 shadow-sm">
-      <p className="font-semibold text-slate-500">{title}</p>
-      <p className="mt-3 text-4xl font-extrabold text-slate-950">{value}</p>
-    </div>
   );
 }
 
