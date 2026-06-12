@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import HeroPanel from "../components/HeroPanel";
+import { useAuthStore } from "../store/authStore";
 
 import googleSignInButton from "../assets/images/google-signin-button.png";
 import customerIcon from "../assets/icons/customer-icon.svg";
@@ -8,7 +11,12 @@ import emailIcon from "../assets/icons/email-icon.svg";
 import lockIcon from "../assets/icons/lock-icon.svg";
 
 function LoginPage() {
-  const [selectedRole, setSelectedRole] = useState<"parent" | "employee">("parent");
+  const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login);
+
+  const [selectedRole, setSelectedRole] = useState<"parent" | "employee">(
+    "parent"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -30,11 +38,11 @@ function LoginPage() {
     console.log({
       selectedRole,
       email,
-      password,
       rememberMe,
     });
 
-    alert(`Signing in as ${selectedRole}`);
+    login();
+    navigate("/dashboard");
   }
 
   return (

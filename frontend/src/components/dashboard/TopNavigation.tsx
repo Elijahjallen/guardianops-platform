@@ -1,12 +1,23 @@
+import { useNavigate } from "react-router-dom";
+
+import { useAuthStore } from "../../store/authStore";
+
 import MagGlassIcon from "../../assets/icons/Mag-glass-icon.svg";
 import NotificationIcon from "../../assets/icons/Notification-icon.svg";
 import ProfileIcon from "../../assets/icons/Profile-Icon.svg";
 import DropDownArrow from "../../assets/icons/Drop-down-arrow.svg";
 
 function TopNavigation() {
+  const navigate = useNavigate();
+  const logout = useAuthStore((state) => state.logout);
+
+  function handleLogout() {
+    logout();
+    navigate("/login");
+  }
+
   return (
     <header className="flex h-24 items-center justify-between border-b border-slate-200 bg-white px-8">
-      {/* Left Side */}
       <div>
         <h1 className="text-3xl font-bold text-slate-950">
           Welcome back, John!
@@ -17,15 +28,9 @@ function TopNavigation() {
         </p>
       </div>
 
-      {/* Right Side */}
       <div className="flex items-center gap-6">
-        {/* Search */}
         <div className="flex w-[420px] items-center rounded-xl border border-slate-200 bg-white px-4 py-3">
-          <img
-            src={MagGlassIcon}
-            alt="Search"
-            className="mr-3 h-5 w-5"
-          />
+          <img src={MagGlassIcon} alt="Search" className="mr-3 h-5 w-5" />
 
           <input
             type="text"
@@ -34,43 +39,29 @@ function TopNavigation() {
           />
         </div>
 
-        {/* Notifications */}
         <button className="relative">
-          <img
-            src={NotificationIcon}
-            alt="Notifications"
-            className="h-6 w-6"
-          />
-
+          <img src={NotificationIcon} alt="Notifications" className="h-6 w-6" />
           <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-blue-600" />
         </button>
 
-        {/* Divider */}
         <div className="h-8 w-px bg-slate-200" />
 
-        {/* Profile */}
-        <button className="flex items-center gap-3">
-          <img
-            src={ProfileIcon}
-            alt="Profile"
-            className="h-11 w-11"
-          />
+        <div className="flex items-center gap-3">
+          <img src={ProfileIcon} alt="Profile" className="h-11 w-11" />
 
           <div className="text-left">
-            <p className="font-semibold text-slate-900">
-              John Smith
-            </p>
-
-            <p className="text-xs text-slate-500">
-              Transport Coordinator
-            </p>
+            <p className="font-semibold text-slate-900">John Smith</p>
+            <p className="text-xs text-slate-500">Transport Coordinator</p>
           </div>
 
-          <img
-            src={DropDownArrow}
-            alt="Menu"
-            className="h-4 w-4"
-          />
+          <img src={DropDownArrow} alt="Menu" className="h-4 w-4" />
+        </div>
+
+        <button
+          onClick={handleLogout}
+          className="rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Logout
         </button>
       </div>
     </header>
