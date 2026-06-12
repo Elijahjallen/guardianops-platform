@@ -3,48 +3,11 @@ import { useNavigate } from "react-router-dom";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import NewCaseModal from "../components/cases/NewCaseModal";
-
-const cases = [
-  {
-    id: "2026-0014",
-    client: "Orange County Schools",
-    status: "En Route",
-    staff: "Michael Brown",
-    destination: "Dallas, TX",
-    pickupDate: "May 20, 2026",
-    lastUpdate: "2 min ago",
-  },
-  {
-    id: "2026-0013",
-    client: "Safe Harbor Agency",
-    status: "Scheduled",
-    staff: "Sarah Johnson",
-    destination: "Boise, ID",
-    pickupDate: "May 20, 2026",
-    lastUpdate: "2 min ago",
-  },
-  {
-    id: "2026-0012",
-    client: "Family Services Inc.",
-    status: "Pending",
-    staff: "David Wilson",
-    destination: "Seattle, WA",
-    pickupDate: "May 20, 2026",
-    lastUpdate: "2 min ago",
-  },
-  {
-    id: "2026-0011",
-    client: "Orange County Schools",
-    status: "In Progress",
-    staff: "Jennifer Lee",
-    destination: "Miami, FL",
-    pickupDate: "May 20, 2026",
-    lastUpdate: "2 min ago",
-  },
-];
+import { useCaseStore } from "../store/caseStore";
 
 function CasesPage() {
   const navigate = useNavigate();
+  const cases = useCaseStore((state) => state.cases);
   const [isNewCaseOpen, setIsNewCaseOpen] = useState(false);
 
   return (
@@ -52,7 +15,6 @@ function CasesPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-slate-950">Cases</h1>
-
           <p className="mt-2 text-slate-500">
             Manage transport cases, assignments, statuses, and case activity.
           </p>
@@ -116,27 +78,20 @@ function CasesPage() {
                   <td className="px-6 py-5 font-bold text-slate-950">
                     {item.id}
                   </td>
-
                   <td className="px-6 py-5 text-slate-700">{item.client}</td>
-
                   <td className="px-6 py-5">
                     <StatusBadge status={item.status} />
                   </td>
-
                   <td className="px-6 py-5 text-slate-700">{item.staff}</td>
-
                   <td className="px-6 py-5 text-slate-700">
                     {item.destination}
                   </td>
-
                   <td className="px-6 py-5 text-slate-700">
                     {item.pickupDate}
                   </td>
-
                   <td className="px-6 py-5 text-slate-700">
                     {item.lastUpdate}
                   </td>
-
                   <td className="px-6 py-5">
                     <button
                       onClick={() => navigate(`/cases/${item.id}`)}

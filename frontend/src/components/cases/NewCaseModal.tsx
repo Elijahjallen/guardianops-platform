@@ -1,12 +1,50 @@
+import { useState } from "react";
+import { useCaseStore, type TransportCase } from "../../store/caseStore";
+
 type NewCaseModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
 
 function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
-  if (!isOpen) {
-    return null;
-  }
+  const addCase = useCaseStore((state) => state.addCase);
+
+  const [clientName, setClientName] = useState("");
+  const [assignedStaff, setAssignedStaff] = useState("");
+  const [pickupLocation, setPickupLocation] = useState("");
+  const [destination, setDestination] = useState("");
+  const [pickupDate, setPickupDate] = useState("");
+  const [priority, setPriority] = useState("Normal");
+  const [notes, setNotes] = useState("");
+
+  if (!isOpen) return null;
+
+  const handleCreateCase = () => {
+    const newCase: TransportCase = {
+      id: `2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      client: clientName,
+      status: "Pending",
+      staff: assignedStaff,
+      pickupLocation,
+      destination,
+      pickupDate,
+      priority,
+      notes,
+      lastUpdate: "Just now",
+    };
+
+    addCase(newCase);
+
+    setClientName("");
+    setAssignedStaff("");
+    setPickupLocation("");
+    setDestination("");
+    setPickupDate("");
+    setPriority("Normal");
+    setNotes("");
+
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4">
@@ -16,7 +54,6 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
             <h2 className="text-3xl font-bold text-slate-950">
               Create New Case
             </h2>
-
             <p className="mt-1 text-slate-500">
               Enter transport case details and assignment information.
             </p>
@@ -31,18 +68,31 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Client Name" placeholder="Enter client name" />
-          <Field label="Assigned Staff" placeholder="Select staff member" />
-          <Field label="Pickup Location" placeholder="Enter pickup location" />
-          <Field label="Destination" placeholder="Enter destination" />
-          <Field label="Pickup Date" type="date" />
-          <Field label="Priority" placeholder="Normal / High / Urgent" />
+          <Field label="Client Name" value={clientName} onChange={setClientName} />
+          <Field label="Assigned Staff" value={assignedStaff} onChange={setAssignedStaff} />
+          <Field label="Pickup Location" value={pickupLocation} onChange={setPickupLocation} />
+          <Field label="Destination" value={destination} onChange={setDestination} />
+          <Field label="Pickup Date" type="date" value={pickupDate} onChange={setPickupDate} />
+
+          <div>
+            <label className="mb-2 block font-bold text-slate-950">Priority</label>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+            >
+              <option>Normal</option>
+              <option>High</option>
+              <option>Urgent</option>
+            </select>
+          </div>
         </div>
 
         <div className="mt-5">
           <label className="mb-2 block font-bold text-slate-950">Notes</label>
-
           <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
             placeholder="Add case notes..."
             className="h-32 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none"
           />
@@ -57,7 +107,7 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
           </button>
 
           <button
-            onClick={onClose}
+            onClick={handleCreateCase}
             className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700"
           >
             Create Case
@@ -70,18 +120,19 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
 
 type FieldProps = {
   label: string;
-  placeholder?: string;
+  value: string;
+  onChange: (value: string) => void;
   type?: string;
 };
 
-function Field({ label, placeholder, type = "text" }: FieldProps) {
+function Field({ label, value, onChange, type = "text" }: FieldProps) {
   return (
     <div>
       <label className="mb-2 block font-bold text-slate-950">{label}</label>
-
       <input
         type={type}
-        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
       />
     </div>
