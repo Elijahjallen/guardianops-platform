@@ -1,16 +1,36 @@
+import DashboardLayout from "../layouts/DashboardLayout";
+
 function DashboardPage() {
   return (
-    <main className="min-h-screen bg-slate-100 p-8">
-      <div className="rounded-3xl bg-white p-8 shadow-sm">
-        <h1 className="text-4xl font-extrabold text-slate-950">
-          GuardianOps Dashboard
-        </h1>
+    <DashboardLayout>
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard title="Active Cases" value="14" />
+        <MetricCard title="Pending Quotes" value="6" />
+        <MetricCard title="Field Staff Active" value="8" />
+        <MetricCard title="Open Expenses" value="$4,280" />
+      </div>
 
-        <p className="mt-3 text-slate-600">
-          Main operations dashboard coming soon.
+      <div className="mt-8 rounded-3xl bg-white p-6 shadow-sm">
+        <h3 className="text-2xl font-bold text-slate-950">Active Cases</h3>
+        <p className="mt-2 text-slate-500">
+          Case table and operational workflow coming next.
         </p>
       </div>
-    </main>
+    </DashboardLayout>
+  );
+}
+
+type MetricCardProps = {
+  title: string;
+  value: string;
+};
+
+function MetricCard({ title, value }: MetricCardProps) {
+  return (
+    <div className="rounded-3xl bg-white p-6 shadow-sm">
+      <p className="font-semibold text-slate-500">{title}</p>
+      <p className="mt-3 text-4xl font-extrabold text-slate-950">{value}</p>
+    </div>
   );
 }
 
