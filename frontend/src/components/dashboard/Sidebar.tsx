@@ -1,3 +1,5 @@
+import { NavLink } from "react-router-dom";
+
 import GuardianLogo from "../../assets/logos/Guardian-Ops-Logo.png";
 
 import HomeIcon from "../../assets/icons/Home-Icon-White.svg";
@@ -14,56 +16,23 @@ import SettingsIcon from "../../assets/icons/Settings-Icon-White.svg";
 import SupportIcon from "../../assets/icons/Support-Icon-White.svg";
 
 const menuItems = [
-  {
-    title: "Dashboard",
-    icon: HomeIcon,
-    active: true,
-  },
-  {
-    title: "Cases",
-    icon: CasesIcon,
-  },
-  {
-    title: "Intake Forms",
-    icon: IntakeIcon,
-  },
-  {
-    title: "Quotes",
-    icon: QuotesIcon,
-  },
-  {
-    title: "Expenses",
-    icon: ExpensesIcon,
-  },
-  {
-    title: "Scheduling",
-    icon: SchedulingIcon,
-  },
-  {
-    title: "Field Staff",
-    icon: FieldStaffIcon,
-  },
+  { title: "Dashboard", icon: HomeIcon, path: "/dashboard" },
+  { title: "Cases", icon: CasesIcon, path: "/cases" },
+  { title: "Intake Forms", icon: IntakeIcon, path: "/intake-forms" },
+  { title: "Quotes", icon: QuotesIcon, path: "/quotes" },
+  { title: "Expenses", icon: ExpensesIcon, path: "/expenses" },
+  { title: "Scheduling", icon: SchedulingIcon, path: "/scheduling" },
+  { title: "Field Staff", icon: FieldStaffIcon, path: "/field-staff" },
   {
     title: "Notifications",
     icon: NotificationsIcon,
+    path: "/notifications",
     badge: "12",
   },
-  {
-    title: "Reports",
-    icon: ReportsIcon,
-  },
-  {
-    title: "Client Directory",
-    icon: ClientDirectoryIcon,
-  },
-  {
-    title: "Settings",
-    icon: SettingsIcon,
-  },
-  {
-    title: "Support",
-    icon: SupportIcon,
-  },
+  { title: "Reports", icon: ReportsIcon, path: "/reports" },
+  { title: "Client Directory", icon: ClientDirectoryIcon, path: "/clients" },
+  { title: "Settings", icon: SettingsIcon, path: "/settings" },
+  { title: "Support", icon: SupportIcon, path: "/support" },
 ];
 
 function Sidebar() {
@@ -72,26 +41,23 @@ function Sidebar() {
       className="hidden min-h-screen w-[300px] flex-col text-white xl:flex"
       style={{ backgroundColor: "#001333" }}
     >
-      {/* Logo Area */}
       <div className="flex justify-center px-6 pt-8 pb-8">
-        <img
-          src={GuardianLogo}
-          alt="GuardianOps"
-          className="w-[220px]"
-        />
+        <img src={GuardianLogo} alt="GuardianOps" className="w-[220px]" />
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 px-5">
         <div className="space-y-3">
           {menuItems.map((item) => (
-            <button
+            <NavLink
               key={item.title}
-              className={`flex w-full items-center rounded-xl px-5 py-3 transition-all ${
-                item.active
-                  ? "bg-[#2563EB] text-white"
-                  : "text-slate-200 hover:bg-[#002766] hover:text-white"
-              }`}
+              to={item.path}
+              className={({ isActive }) =>
+                `flex w-full items-center rounded-xl px-5 py-3 transition-all ${
+                  isActive
+                    ? "bg-[#2563EB] text-white"
+                    : "text-slate-200 hover:bg-[#002766] hover:text-white"
+                }`
+              }
             >
               <div className="flex min-w-0 flex-1 items-center gap-5">
                 <img
@@ -110,15 +76,13 @@ function Sidebar() {
                   {item.badge}
                 </span>
               )}
-            </button>
+            </NavLink>
           ))}
         </div>
       </nav>
 
-      {/* Divider */}
       <div className="mx-12 border-t border-[#5E6C89]" />
 
-      {/* User Profile */}
       <div className="px-8 py-7">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-200 text-lg font-semibold text-slate-900">
