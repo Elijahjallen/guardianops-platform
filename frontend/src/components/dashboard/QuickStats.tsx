@@ -1,3 +1,5 @@
+import { useCaseStore } from "../../store/caseStore";
+
 import CasesIcon from "../../assets/icons/Cases-Icon.svg";
 import PendingQuotesIcon from "../../assets/icons/Pending-Quotes-Icon.svg";
 import FieldStaffIcon from "../../assets/icons/Field-Staff-Icon-Purple.svg";
@@ -6,42 +8,47 @@ import OpenNotificationsIcon from "../../assets/icons/Open-Notifications-Icon.sv
 import UpArrowIcon from "../../assets/icons/Up-Arrow-Icon.svg";
 import DownArrowIcon from "../../assets/icons/Down-Arrow-Notifications.svg";
 
-const stats = [
-  {
-    title: "Active Cases",
-    value: "14",
-    change: "2",
-    direction: "up",
-    icon: CasesIcon,
-    iconBackground: "bg-blue-50",
-  },
-  {
-    title: "Pending Quotes",
-    value: "8",
-    change: "5",
-    direction: "up",
-    icon: PendingQuotesIcon,
-    iconBackground: "bg-green-50",
-  },
-  {
-    title: "Field Staff Active",
-    value: "12",
-    change: "5",
-    direction: "up",
-    icon: FieldStaffIcon,
-    iconBackground: "bg-purple-50",
-  },
-  {
-    title: "Open Notifications",
-    value: "21",
-    change: "5",
-    direction: "down",
-    icon: OpenNotificationsIcon,
-    iconBackground: "bg-orange-50",
-  },
-];
-
 function QuickStats() {
+  const cases = useCaseStore((state) => state.cases);
+
+  const activeCases = cases.length;
+  const pendingCases = cases.filter((item) => item.status === "Pending").length;
+
+  const stats = [
+    {
+      title: "Active Cases",
+      value: activeCases.toString(),
+      change: "2",
+      direction: "up",
+      icon: CasesIcon,
+      iconBackground: "bg-blue-50",
+    },
+    {
+      title: "Pending Quotes",
+      value: pendingCases.toString(),
+      change: "5",
+      direction: "up",
+      icon: PendingQuotesIcon,
+      iconBackground: "bg-green-50",
+    },
+    {
+      title: "Field Staff Active",
+      value: "12",
+      change: "5",
+      direction: "up",
+      icon: FieldStaffIcon,
+      iconBackground: "bg-purple-50",
+    },
+    {
+      title: "Open Notifications",
+      value: "21",
+      change: "5",
+      direction: "down",
+      icon: OpenNotificationsIcon,
+      iconBackground: "bg-orange-50",
+    },
+  ];
+
   return (
     <section className="grid gap-5 md:grid-cols-2 2xl:grid-cols-4">
       {stats.map((stat) => (
