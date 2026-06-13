@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCaseStore, type TransportCase } from "../../store/caseStore";
+import { useNotificationStore } from "../../store/notificationStore";
 
 type NewCaseModalProps = {
   isOpen: boolean;
@@ -8,6 +9,9 @@ type NewCaseModalProps = {
 
 function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
   const addCase = useCaseStore((state) => state.addCase);
+  const addNotification = useNotificationStore(
+    (state) => state.addNotification
+  );
 
   const [clientName, setClientName] = useState("");
   const [assignedStaff, setAssignedStaff] = useState("");
@@ -20,8 +24,10 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
   if (!isOpen) return null;
 
   const handleCreateCase = () => {
+    const caseId = `2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
     const newCase: TransportCase = {
-      id: `2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: caseId,
       client: clientName,
       status: "Pending",
       staff: assignedStaff,
@@ -34,6 +40,13 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
     };
 
     addCase(newCase);
+
+    addNotification({
+      title: "New case created",
+      message: `Case ${caseId} created for ${clientName || "new client"}`,
+      caseId,
+      type: "success",
+    });
 
     setClientName("");
     setAssignedStaff("");
@@ -75,10 +88,12 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
           <Field label="Pickup Date" type="date" value={pickupDate} onChange={setPickupDate} />
 
           <div>
-            <label className="mb-2 block font-bold text-slate-950">Priority</label>
+            <label className="mb-2 block font-bold text-slate-950">
+              Priority
+            </label>
             <select
               value={priority}
-              onChange={(e) => setPriority(e.target.value)}
+              onChange={(event) => setPriority(event.target.value)}
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
             >
               <option>Normal</option>
@@ -92,7 +107,7 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
           <label className="mb-2 block font-bold text-slate-950">Notes</label>
           <textarea
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            onChange={(event) => setNotes(event.target.value)}
             placeholder="Add case notes..."
             className="h-32 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none"
           />
@@ -132,7 +147,7 @@ function Field({ label, value, onChange, type = "text" }: FieldProps) {
       <input
         type={type}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
       />
     </div>

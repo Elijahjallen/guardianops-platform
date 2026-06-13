@@ -4,6 +4,7 @@ import {
   type CaseStatus,
   type TransportCase,
 } from "../../store/caseStore";
+import { useNotificationStore } from "../../store/notificationStore";
 
 type EditCaseModalProps = {
   isOpen: boolean;
@@ -13,6 +14,9 @@ type EditCaseModalProps = {
 
 function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
   const updateCase = useCaseStore((state) => state.updateCase);
+  const addNotification = useNotificationStore(
+    (state) => state.addNotification
+  );
 
   const [client, setClient] = useState("");
   const [status, setStatus] = useState<CaseStatus>("Pending");
@@ -52,6 +56,22 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
       notes,
     });
 
+    addNotification({
+      title: "Case updated",
+      message: `Case ${caseItem.id} was updated`,
+      caseId: caseItem.id,
+      type: "info",
+    });
+
+    if (caseItem.status !== status) {
+      addNotification({
+        title: "Case status changed",
+        message: `Case ${caseItem.id} changed from ${caseItem.status} to ${status}`,
+        caseId: caseItem.id,
+        type: status === "Completed" ? "success" : "warning",
+      });
+    }
+
     onClose();
   }
 
@@ -60,9 +80,7 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
       <div className="w-full max-w-3xl rounded-3xl bg-white p-8 shadow-2xl">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-slate-950">
-              Edit Case
-            </h2>
+            <h2 className="text-3xl font-bold text-slate-950">Edit Case</h2>
 
             <p className="mt-1 text-slate-500">
               Update case details for {caseItem.id}.
@@ -134,9 +152,7 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
         </div>
 
         <div className="mt-5">
-          <label className="mb-2 block font-bold text-slate-950">
-            Notes
-          </label>
+          <label className="mb-2 block font-bold text-slate-950">Notes</label>
 
           <textarea
             value={notes}

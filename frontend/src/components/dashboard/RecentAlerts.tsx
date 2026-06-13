@@ -1,48 +1,14 @@
+import { useNotificationStore } from "../../store/notificationStore";
+
 import CasesIconBlue from "../../assets/icons/Cases-Icon-Blue.svg";
 import ExpensesReportIconGreen from "../../assets/icons/Expenses-Report-Icon-Green.svg";
 import DelayIcon from "../../assets/icons/Delay-Icon.svg";
 import QuoteApprovedIcon from "../../assets/icons/Quote-Approved-Icon.svg";
-import StaffAlertIconBlue from "../../assets/icons/Staff-Alert-Icon-Blue.svg";
-
-const alerts = [
-  {
-    title: "Staff update received",
-    subtitle: "Case 2026-0001",
-    time: "2 min ago",
-    icon: CasesIconBlue,
-    bgColor: "bg-blue-50",
-  },
-  {
-    title: "Expense Report Submitted",
-    subtitle: "Case 2026-0132",
-    time: "30 min ago",
-    icon: ExpensesReportIconGreen,
-    bgColor: "bg-green-50",
-  },
-  {
-    title: "Transport Delay Reported",
-    subtitle: "Case 2026-2152",
-    time: "1 hr ago",
-    icon: DelayIcon,
-    bgColor: "bg-orange-50",
-  },
-  {
-    title: "Quote Approved",
-    subtitle: "Case 2026-0152",
-    time: "2 hr ago",
-    icon: QuoteApprovedIcon,
-    bgColor: "bg-purple-50",
-  },
-  {
-    title: "New Staff Assigned",
-    subtitle: "Case 2026-0139",
-    time: "3 hr ago",
-    icon: StaffAlertIconBlue,
-    bgColor: "bg-blue-50",
-  },
-];
 
 function RecentAlerts() {
+  const notifications = useNotificationStore((state) => state.notifications);
+  const recentNotifications = notifications.slice(0, 5);
+
   return (
     <section className="rounded-xl border border-slate-300 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-300 px-6 py-5">
@@ -54,18 +20,22 @@ function RecentAlerts() {
       </div>
 
       <div className="px-6 py-4">
-        {alerts.map((alert, index) => (
+        {recentNotifications.map((alert, index) => (
           <div
-            key={alert.title}
+            key={alert.id}
             className={`flex items-center gap-4 py-5 ${
-              index !== alerts.length - 1 ? "border-b border-slate-200" : ""
+              index !== recentNotifications.length - 1
+                ? "border-b border-slate-200"
+                : ""
             }`}
           >
             <div
-              className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${alert.bgColor}`}
+              className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${getAlertBackground(
+                alert.type
+              )}`}
             >
               <img
-                src={alert.icon}
+                src={getAlertIcon(alert.type)}
                 alt={alert.title}
                 className="h-7 w-7 object-contain"
               />
@@ -77,20 +47,56 @@ function RecentAlerts() {
               </p>
 
               <p className="mt-1 text-sm text-slate-600">
-                {alert.subtitle}
+                {alert.message}
               </p>
             </div>
 
             <div className="flex w-[70px] shrink-0 flex-col items-end gap-3">
-              <span className="text-xs text-slate-500">{alert.time}</span>
+              <span className="text-xs text-slate-500">
+                {alert.timestamp}
+              </span>
 
               <span className="h-2 w-2 rounded-full bg-blue-600" />
             </div>
           </div>
         ))}
+
+        {recentNotifications.length === 0 && (
+          <p className="py-6 text-center text-sm font-semibold text-slate-500">
+            No recent alerts.
+          </p>
+        )}
       </div>
     </section>
   );
+}
+
+function getAlertIcon(type: string) {
+  switch (type) {
+    case "success":
+      return QuoteApprovedIcon;
+    case "warning":
+      return DelayIcon;
+    case "danger":
+      return ExpensesReportIconGreen;
+    case "info":
+    default:
+      return CasesIconBlue;
+  }
+}
+
+function getAlertBackground(type: string) {
+  switch (type) {
+    case "success":
+      return "bg-green-50";
+    case "warning":
+      return "bg-orange-50";
+    case "danger":
+      return "bg-red-50";
+    case "info":
+    default:
+      return "bg-blue-50";
+  }
 }
 
 export default RecentAlerts;

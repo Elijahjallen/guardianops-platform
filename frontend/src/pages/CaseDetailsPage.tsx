@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import EditCaseModal from "../components/cases/EditCaseModal";
 import { useCaseStore } from "../store/caseStore";
+import { useNotificationStore } from "../store/notificationStore";
 
 function CaseDetailsPage() {
   const navigate = useNavigate();
@@ -14,6 +15,9 @@ function CaseDetailsPage() {
   );
 
   const deleteCase = useCaseStore((state) => state.deleteCase);
+  const addNotification = useNotificationStore(
+    (state) => state.addNotification
+  );
 
   const [isEditOpen, setIsEditOpen] = useState(false);
 
@@ -41,6 +45,13 @@ function CaseDetailsPage() {
   }
 
   function handleDeleteCase() {
+    addNotification({
+      title: "Case deleted",
+      message: `Case ${caseItem.id} was deleted`,
+      caseId: caseItem.id,
+      type: "danger",
+    });
+
     deleteCase(caseItem.id);
     navigate("/cases");
   }
