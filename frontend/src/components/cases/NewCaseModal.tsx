@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCaseStore, type TransportCase } from "../../store/caseStore";
 import { useNotificationStore } from "../../store/notificationStore";
+import { useStaffStore } from "../../store/staffStore";
 
 type NewCaseModalProps = {
   isOpen: boolean;
@@ -9,9 +10,8 @@ type NewCaseModalProps = {
 
 function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
   const addCase = useCaseStore((state) => state.addCase);
-  const addNotification = useNotificationStore(
-    (state) => state.addNotification
-  );
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const staff = useStaffStore((state) => state.staff);
 
   const [clientName, setClientName] = useState("");
   const [assignedStaff, setAssignedStaff] = useState("");
@@ -82,10 +82,37 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
 
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Client Name" value={clientName} onChange={setClientName} />
-          <Field label="Assigned Staff" value={assignedStaff} onChange={setAssignedStaff} />
-          <Field label="Pickup Location" value={pickupLocation} onChange={setPickupLocation} />
+
+          <div>
+            <label className="mb-2 block font-bold text-slate-950">
+              Assigned Staff
+            </label>
+            <select
+              value={assignedStaff}
+              onChange={(event) => setAssignedStaff(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+            >
+              <option value="">Select Staff Member</option>
+              {staff.map((member) => (
+                <option key={member.id} value={member.name}>
+                  {member.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <Field
+            label="Pickup Location"
+            value={pickupLocation}
+            onChange={setPickupLocation}
+          />
           <Field label="Destination" value={destination} onChange={setDestination} />
-          <Field label="Pickup Date" type="date" value={pickupDate} onChange={setPickupDate} />
+          <Field
+            label="Pickup Date"
+            type="date"
+            value={pickupDate}
+            onChange={setPickupDate}
+          />
 
           <div>
             <label className="mb-2 block font-bold text-slate-950">

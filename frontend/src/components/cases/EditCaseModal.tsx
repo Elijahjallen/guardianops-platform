@@ -5,6 +5,7 @@ import {
   type TransportCase,
 } from "../../store/caseStore";
 import { useNotificationStore } from "../../store/notificationStore";
+import { useStaffStore } from "../../store/staffStore";
 
 type EditCaseModalProps = {
   isOpen: boolean;
@@ -14,9 +15,8 @@ type EditCaseModalProps = {
 
 function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
   const updateCase = useCaseStore((state) => state.updateCase);
-  const addNotification = useNotificationStore(
-    (state) => state.addNotification
-  );
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const staffList = useStaffStore((state) => state.staff);
 
   const [client, setClient] = useState("");
   const [status, setStatus] = useState<CaseStatus>("Pending");
@@ -40,9 +40,7 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
     }
   }, [caseItem]);
 
-  if (!isOpen || !caseItem) {
-    return null;
-  }
+  if (!isOpen || !caseItem) return null;
 
   function handleSaveChanges() {
     updateCase(caseItem.id, {
@@ -63,6 +61,15 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
       type: "info",
     });
 
+    if (caseItem.staff !== staff) {
+      addNotification({
+        title: "Staff assignment changed",
+        message: `Case ${caseItem.id} assigned to ${staff || "Unassigned"}`,
+        caseId: caseItem.id,
+        type: "info",
+      });
+    }
+
     if (caseItem.status !== status) {
       addNotification({
         title: "Case status changed",
@@ -81,7 +88,6 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold text-slate-950">Edit Case</h2>
-
             <p className="mt-1 text-slate-500">
               Update case details for {caseItem.id}.
             </p>
@@ -102,7 +108,6 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
             <label className="mb-2 block font-bold text-slate-950">
               Status
             </label>
-
             <select
               value={status}
               onChange={(event) => setStatus(event.target.value as CaseStatus)}
@@ -117,7 +122,24 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
             </select>
           </div>
 
-          <Field label="Assigned Staff" value={staff} onChange={setStaff} />
+          <div>
+            <label className="mb-2 block font-bold text-slate-950">
+              Assigned Staff
+            </label>
+            <select
+              value={staff}
+              onChange={(event) => setStaff(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+            >
+              <option value="">Select Staff Member</option>
+              {staffList.map((member) => (
+                <option key={member.id} value={member.name}>
+                  {member.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <Field
             label="Pickup Location"
             value={pickupLocation}
@@ -138,7 +160,6 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
             <label className="mb-2 block font-bold text-slate-950">
               Priority
             </label>
-
             <select
               value={priority}
               onChange={(event) => setPriority(event.target.value)}
@@ -153,7 +174,6 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
 
         <div className="mt-5">
           <label className="mb-2 block font-bold text-slate-950">Notes</label>
-
           <textarea
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
@@ -191,7 +211,6 @@ function Field({ label, value, onChange }: FieldProps) {
   return (
     <div>
       <label className="mb-2 block font-bold text-slate-950">{label}</label>
-
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
