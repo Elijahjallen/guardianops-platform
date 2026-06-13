@@ -1,41 +1,18 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useCaseStore } from "../store/caseStore";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
-
-const clients = [
-  {
-    id: "CL-001",
-    name: "Orange County Schools",
-    type: "School District",
-    contact: "Rebecca Adams",
-    phone: "(714) 555-0192",
-    email: "rebecca.adams@ocs.org",
-    location: "Orange County, CA",
-  },
-  {
-    id: "CL-002",
-    name: "Safe Harbor Agency",
-    type: "Youth Services",
-    contact: "Thomas Miller",
-    phone: "(208) 555-0138",
-    email: "tmiller@safeharbor.org",
-    location: "Boise, ID",
-  },
-  {
-    id: "CL-003",
-    name: "Family Services Inc.",
-    type: "Family Support",
-    contact: "Angela Davis",
-    phone: "(602) 555-0174",
-    email: "angela.davis@familyservices.com",
-    location: "Phoenix, AZ",
-  },
-];
+import AddClientModal from "../components/clients/AddClientModal";
+import { useCaseStore } from "../store/caseStore";
+import { useClientStore } from "../store/clientStore";
 
 function ClientDirectoryPage() {
   const navigate = useNavigate();
+
   const cases = useCaseStore((state) => state.cases);
+  const clients = useClientStore((state) => state.clients);
+
+  const [isAddClientOpen, setIsAddClientOpen] = useState(false);
 
   return (
     <DashboardLayout>
@@ -50,7 +27,10 @@ function ClientDirectoryPage() {
           </p>
         </div>
 
-        <button className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700">
+        <button
+          onClick={() => setIsAddClientOpen(true)}
+          className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700"
+        >
           + Add Client
         </button>
       </div>
@@ -133,8 +113,19 @@ function ClientDirectoryPage() {
               })}
             </tbody>
           </table>
+
+          {clients.length === 0 && (
+            <div className="p-8 text-center font-semibold text-slate-500">
+              No clients found.
+            </div>
+          )}
         </div>
       </section>
+
+      <AddClientModal
+        isOpen={isAddClientOpen}
+        onClose={() => setIsAddClientOpen(false)}
+      />
     </DashboardLayout>
   );
 }

@@ -1,54 +1,39 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
+import EditClientModal from "../components/clients/EditClientModal";
 import { useCaseStore } from "../store/caseStore";
-
-const clients = [
-  {
-    id: "CL-001",
-    name: "Orange County Schools",
-    type: "School District",
-    contact: "Rebecca Adams",
-    phone: "(714) 555-0192",
-    email: "rebecca.adams@ocs.org",
-    location: "Orange County, CA",
-    address: "100 Education Way, Orange County, CA",
-    notes: "Primary school district client for scheduled student transport cases.",
-  },
-  {
-    id: "CL-002",
-    name: "Safe Harbor Agency",
-    type: "Youth Services",
-    contact: "Thomas Miller",
-    phone: "(208) 555-0138",
-    email: "tmiller@safeharbor.org",
-    location: "Boise, ID",
-    address: "420 Harbor Lane, Boise, ID",
-    notes: "Youth services partner with frequent urgent transport needs.",
-  },
-  {
-    id: "CL-003",
-    name: "Family Services Inc.",
-    type: "Family Support",
-    contact: "Angela Davis",
-    phone: "(602) 555-0174",
-    email: "angela.davis@familyservices.com",
-    location: "Phoenix, AZ",
-    address: "810 Family Center Drive, Phoenix, AZ",
-    notes: "Family support agency with recurring case coordination.",
-  },
-];
+import { useClientStore } from "../store/clientStore";
 
 function ClientDetailsPage() {
   const navigate = useNavigate();
   const { clientId } = useParams();
+
   const cases = useCaseStore((state) => state.cases);
+  const clients = useClientStore((state) => state.clients);
+  const deleteClient = useClientStore((state) => state.deleteClient);
+
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const client = clients.find((item) => item.id === clientId);
 
   const clientCases = client
     ? cases.filter((caseItem) => caseItem.client === client.name)
     : [];
+
+  function handleDeleteClient() {
+    if (!client) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${client.name}?`
+    );
+
+    if (!confirmed) return;
+
+    deleteClient(client.id);
+    navigate("/clients");
+  }
 
   if (!client) {
     return (
@@ -89,9 +74,21 @@ function ClientDetailsPage() {
           </p>
         </div>
 
-        <button className="rounded-xl border border-blue-600 px-6 py-3 font-bold text-blue-600 hover:bg-blue-50">
-          Edit Client
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setIsEditOpen(true)}
+            className="rounded-xl border border-blue-600 px-6 py-3 font-bold text-blue-600 hover:bg-blue-50"
+          >
+            Edit Client
+          </button>
+
+          <button
+            onClick={handleDeleteClient}
+            className="rounded-xl border border-red-500 px-6 py-3 font-bold text-red-600 hover:bg-red-50"
+          >
+            Delete Client
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
@@ -203,6 +200,12 @@ function ClientDetailsPage() {
           </section>
         </div>
       </div>
+
+      <EditClientModal
+        isOpen={isEditOpen}
+        client={client}
+        onClose={() => setIsEditOpen(false)}
+      />
     </DashboardLayout>
   );
 }
