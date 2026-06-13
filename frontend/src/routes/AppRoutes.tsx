@@ -8,7 +8,7 @@ import FieldStaffPage from "../pages/FieldStaffPage";
 import NotificationsPage from "../pages/NotificationsPage";
 import ReportsPage from "../pages/ReportsPage";
 import StaffDetailsPage from "../pages/StaffDetailsPage";
-
+import ClientDirectoryPage from "../pages/ClientDirectoryPage";
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
@@ -16,6 +16,15 @@ function AppRoutes() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+
+        <Route
+          path="/clients"
+          element={
+            <ProtectedRoute>
+              <ClientDirectoryPage />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/dashboard"
