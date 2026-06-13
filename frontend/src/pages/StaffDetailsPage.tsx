@@ -11,6 +11,7 @@ function StaffDetailsPage() {
   const { staffId } = useParams();
 
   const staff = useStaffStore((state) => state.staff);
+  const deleteStaff = useStaffStore((state) => state.deleteStaff);
   const cases = useCaseStore((state) => state.cases);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -20,6 +21,19 @@ function StaffDetailsPage() {
   const assignedCases = staffMember
     ? cases.filter((caseItem) => caseItem.staff === staffMember.name)
     : [];
+
+  function handleDeleteStaff() {
+    if (!staffMember) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${staffMember.name}?`
+    );
+
+    if (!confirmed) return;
+
+    deleteStaff(staffMember.id);
+    navigate("/field-staff");
+  }
 
   if (!staffMember) {
     return (
@@ -60,12 +74,21 @@ function StaffDetailsPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsEditOpen(true)}
-          className="rounded-xl border border-blue-600 px-6 py-3 font-bold text-blue-600 hover:bg-blue-50"
-        >
-          Edit Staff
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setIsEditOpen(true)}
+            className="rounded-xl border border-blue-600 px-6 py-3 font-bold text-blue-600 hover:bg-blue-50"
+          >
+            Edit Staff
+          </button>
+
+          <button
+            onClick={handleDeleteStaff}
+            className="rounded-xl border border-red-500 px-6 py-3 font-bold text-red-600 hover:bg-red-50"
+          >
+            Delete Staff
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
@@ -88,7 +111,10 @@ function StaffDetailsPage() {
             <Detail label="Staff ID" value={staffMember.id} />
             <Detail label="Date of Hire" value={staffMember.dateOfHire} />
             <Detail label="Current Location" value={staffMember.location} />
-            <Detail label="Active Cases" value={assignedCases.length.toString()} />
+            <Detail
+              label="Active Cases"
+              value={assignedCases.length.toString()}
+            />
           </div>
         </aside>
 
@@ -106,14 +132,20 @@ function StaffDetailsPage() {
             <DetailGrid>
               <Detail label="Date of Hire" value={staffMember.dateOfHire} />
               <Detail label="Current Location" value={staffMember.location} />
-              <Detail label="Active Cases" value={assignedCases.length.toString()} />
+              <Detail
+                label="Active Cases"
+                value={assignedCases.length.toString()}
+              />
               <Detail label="Home Airport" value={staffMember.homeAirport} />
             </DetailGrid>
           </InfoCard>
 
           <InfoCard title="Travel Credentials">
             <DetailGrid>
-              <Detail label="Driver's License" value={staffMember.driversLicense} />
+              <Detail
+                label="Driver's License"
+                value={staffMember.driversLicense}
+              />
               <Detail label="Passport" value={staffMember.passport} />
               <Detail label="Home Airport" value={staffMember.homeAirport} />
             </DetailGrid>
@@ -121,7 +153,10 @@ function StaffDetailsPage() {
 
           <InfoCard title="Education & Certifications">
             <DetailGrid>
-              <ListDetail label="Certifications" values={staffMember.certifications} />
+              <ListDetail
+                label="Certifications"
+                values={staffMember.certifications}
+              />
               <ListDetail label="Degrees" values={staffMember.degrees} />
             </DetailGrid>
           </InfoCard>
@@ -131,7 +166,10 @@ function StaffDetailsPage() {
               <Detail label="Contact Number" value={staffMember.phone} />
               <Detail label="Email" value={staffMember.email} />
               <Detail label="Home Address" value={staffMember.homeAddress} />
-              <Detail label="Emergency Contact" value={staffMember.emergencyContact} />
+              <Detail
+                label="Emergency Contact"
+                value={staffMember.emergencyContact}
+              />
             </DetailGrid>
           </InfoCard>
 
@@ -271,7 +309,9 @@ function StatusBadge({ status }: { status: StaffStatus }) {
   };
 
   return (
-    <span className={`rounded-lg px-3 py-1 text-sm font-bold ${styles[status]}`}>
+    <span
+      className={`rounded-lg px-3 py-1 text-sm font-bold ${styles[status]}`}
+    >
       {status}
     </span>
   );

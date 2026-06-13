@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
+import AddStaffModal from "../components/staff/AddStaffModal";
 import { useStaffStore, type StaffStatus } from "../store/staffStore";
 
 function FieldStaffPage() {
   const navigate = useNavigate();
   const staff = useStaffStore((state) => state.staff);
+  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
 
   return (
     <DashboardLayout>
@@ -17,7 +20,10 @@ function FieldStaffPage() {
           </p>
         </div>
 
-        <button className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700">
+        <button
+          onClick={() => setIsAddStaffOpen(true)}
+          className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700"
+        >
           + Add Staff
         </button>
       </div>
@@ -107,6 +113,11 @@ function FieldStaffPage() {
           </table>
         </div>
       </section>
+
+      <AddStaffModal
+        isOpen={isAddStaffOpen}
+        onClose={() => setIsAddStaffOpen(false)}
+      />
     </DashboardLayout>
   );
 }
