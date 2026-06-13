@@ -5,6 +5,8 @@ import DashboardPage from "../pages/DashboardPage";
 import CasesPage from "../pages/CasesPage";
 import CaseDetailsPage from "../pages/CaseDetailsPage";
 import FieldStaffPage from "../pages/FieldStaffPage";
+import NotificationsPage from "../pages/NotificationsPage";
+import ReportsPage from "../pages/ReportsPage";
 
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -24,6 +26,15 @@ function AppRoutes() {
         />
 
         <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <ReportsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/cases"
           element={
             <ProtectedRoute>
@@ -32,6 +43,14 @@ function AppRoutes() {
           }
         />
 
+       <Route
+  path="/notifications"
+  element={
+    <ProtectedRoute>
+      <NotificationsPage />
+    </ProtectedRoute>
+  }
+  />    
         <Route
           path="/cases/:caseId"
           element={
