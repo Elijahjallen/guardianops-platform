@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
+import SchedulingPage from "../pages/SchedulingPage";
 import LoginPage from "../pages/LoginPage";
 import DashboardPage from "../pages/DashboardPage";
 import CasesPage from "../pages/CasesPage";
@@ -21,6 +21,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/scheduling"
+          element={
+            <ProtectedRoute>
+              <SchedulingPage />
             </ProtectedRoute>
           }
         />
