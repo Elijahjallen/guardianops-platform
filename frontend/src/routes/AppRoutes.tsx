@@ -7,6 +7,7 @@ import CaseDetailsPage from "../pages/CaseDetailsPage";
 import FieldStaffPage from "../pages/FieldStaffPage";
 import NotificationsPage from "../pages/NotificationsPage";
 import ReportsPage from "../pages/ReportsPage";
+import StaffDetailsPage from "../pages/StaffDetailsPage";
 
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -74,6 +75,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <FieldStaffPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/field-staff/:staffId"
+          element={
+            <ProtectedRoute>
+              <StaffDetailsPage />
             </ProtectedRoute>
           }
         />

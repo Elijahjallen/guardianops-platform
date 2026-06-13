@@ -1,7 +1,10 @@
+import { useNavigate } from "react-router-dom";
+
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import { useStaffStore, type StaffStatus } from "../store/staffStore";
 
 function FieldStaffPage() {
+  const navigate = useNavigate();
   const staff = useStaffStore((state) => state.staff);
 
   return (
@@ -41,7 +44,7 @@ function FieldStaffPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1000px] text-left">
+          <table className="w-full min-w-[1100px] text-left">
             <thead className="bg-slate-50 text-sm font-bold uppercase text-slate-600">
               <tr>
                 <th className="px-6 py-4">Staff ID</th>
@@ -51,23 +54,52 @@ function FieldStaffPage() {
                 <th className="px-6 py-4">Active Cases</th>
                 <th className="px-6 py-4">Location</th>
                 <th className="px-6 py-4">Contact</th>
+                <th className="px-6 py-4">Action</th>
               </tr>
             </thead>
 
             <tbody>
               {staff.map((member) => (
-                <tr key={member.id} className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="px-6 py-5 font-bold text-slate-950">{member.id}</td>
-                  <td className="px-6 py-5 font-semibold text-slate-800">{member.name}</td>
+                <tr
+                  key={member.id}
+                  className="border-t border-slate-100 hover:bg-slate-50"
+                >
+                  <td className="px-6 py-5 font-bold text-slate-950">
+                    {member.id}
+                  </td>
+
+                  <td className="px-6 py-5 font-semibold text-slate-800">
+                    {member.name}
+                  </td>
+
                   <td className="px-6 py-5 text-slate-700">{member.role}</td>
+
                   <td className="px-6 py-5">
                     <StatusBadge status={member.status} />
                   </td>
-                  <td className="px-6 py-5 text-slate-700">{member.activeCases}</td>
-                  <td className="px-6 py-5 text-slate-700">{member.location}</td>
+
+                  <td className="px-6 py-5 text-slate-700">
+                    {member.activeCases}
+                  </td>
+
+                  <td className="px-6 py-5 text-slate-700">
+                    {member.location}
+                  </td>
+
                   <td className="px-6 py-5">
-                    <p className="font-semibold text-slate-800">{member.phone}</p>
+                    <p className="font-semibold text-slate-800">
+                      {member.phone}
+                    </p>
                     <p className="text-sm text-slate-500">{member.email}</p>
+                  </td>
+
+                  <td className="px-6 py-5">
+                    <button
+                      onClick={() => navigate(`/field-staff/${member.id}`)}
+                      className="font-bold text-blue-600 hover:text-blue-700"
+                    >
+                      View Profile
+                    </button>
                   </td>
                 </tr>
               ))}
