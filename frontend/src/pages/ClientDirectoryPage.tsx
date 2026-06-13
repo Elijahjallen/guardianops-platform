@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+
 import { useCaseStore } from "../store/caseStore";
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 
@@ -32,6 +34,7 @@ const clients = [
 ];
 
 function ClientDirectoryPage() {
+  const navigate = useNavigate();
   const cases = useCaseStore((state) => state.cases);
 
   return (
@@ -41,6 +44,7 @@ function ClientDirectoryPage() {
           <h1 className="text-4xl font-bold text-slate-950">
             Client Directory
           </h1>
+
           <p className="mt-2 text-slate-500">
             Manage client agencies, contacts, and associated transport cases.
           </p>
@@ -53,13 +57,11 @@ function ClientDirectoryPage() {
 
       <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 p-6">
-          <h2 className="text-2xl font-bold text-slate-950">
-            Clients
-          </h2>
+          <h2 className="text-2xl font-bold text-slate-950">Clients</h2>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1000px] text-left">
+          <table className="w-full min-w-[1100px] text-left">
             <thead className="bg-slate-50 text-sm font-bold uppercase text-slate-600">
               <tr>
                 <th className="px-6 py-4">Client ID</th>
@@ -69,6 +71,7 @@ function ClientDirectoryPage() {
                 <th className="px-6 py-4">Location</th>
                 <th className="px-6 py-4">Open Cases</th>
                 <th className="px-6 py-4">Contact</th>
+                <th className="px-6 py-4">Action</th>
               </tr>
             </thead>
 
@@ -111,9 +114,19 @@ function ClientDirectoryPage() {
                       <p className="font-semibold text-slate-800">
                         {client.phone}
                       </p>
+
                       <p className="text-sm text-slate-500">
                         {client.email}
                       </p>
+                    </td>
+
+                    <td className="px-6 py-5">
+                      <button
+                        onClick={() => navigate(`/clients/${client.id}`)}
+                        className="font-bold text-blue-600 hover:text-blue-700"
+                      >
+                        View Client
+                      </button>
                     </td>
                   </tr>
                 );

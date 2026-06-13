@@ -10,6 +10,7 @@ import ReportsPage from "../pages/ReportsPage";
 import StaffDetailsPage from "../pages/StaffDetailsPage";
 import ClientDirectoryPage from "../pages/ClientDirectoryPage";
 import ProtectedRoute from "./ProtectedRoute";
+import ClientDetailsPage from "../pages/ClientDetailsPage";
 
 function AppRoutes() {
   return (
@@ -24,6 +25,15 @@ function AppRoutes() {
               <ClientDirectoryPage />
             </ProtectedRoute>
           }
+        />
+
+        <Route
+          path="/clients/:clientId"
+            element={
+              <ProtectedRoute>
+                <ClientDetailsPage />
+              </ProtectedRoute>
+            }
         />
 
         <Route
