@@ -1,36 +1,63 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import NewCaseModal from "../components/cases/NewCaseModal";
-import { useCaseStore, type CaseStatus } from "../store/caseStore";
+import { getCases } from "../services/api";
 
-const filters: ("All" | CaseStatus)[] = [
-  "All",
-  "En Route",
-  "Scheduled",
-  "Pending",
-  "In Progress",
-  "Completed",
-  "Cancelled",
-];
+type ApiCase = {
+  id: string;
+  caseNumber: string;
+  clientName: string;
+  status: string;
+  destination: string;
+  pickupDate: string;
+  staffName?: string | null;
+  createdAt: string;
+};
 
 function CasesPage() {
   const navigate = useNavigate();
-  const cases = useCaseStore((state) => state.cases);
 
+  const [cases, setCases] = useState<ApiCase[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isNewCaseOpen, setIsNewCaseOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState<"All" | CaseStatus>(
-    "All"
-  );
+  const [selectedFilter, setSelectedFilter] = useState("All");
+
+  useEffect(() => {
+    async function loadCases() {
+      try {
+        const data = await getCases();
+        setCases(data);
+      } catch (error) {
+        console.error("Failed to load cases:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadCases();
+  }, []);
+
+  const filters = [
+    "All",
+    "Scheduled",
+    "Pending",
+    "In Progress",
+    "In Transit",
+    "Completed",
+    "Cancelled",
+  ];
 
   const filteredCases = cases.filter((item) => {
+    const searchValue = searchText.toLowerCase();
+
     const matchesSearch =
-      item.id.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.client.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.staff.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.destination.toLowerCase().includes(searchText.toLowerCase());
+      item.caseNumber.toLowerCase().includes(searchValue) ||
+      item.clientName.toLowerCase().includes(searchValue) ||
+      item.destination.toLowerCase().includes(searchValue) ||
+      (item.staffName || "").toLowerCase().includes(searchValue);
 
     const matchesFilter =
       selectedFilter === "All" || item.status === selectedFilter;
@@ -94,7 +121,6 @@ function CasesPage() {
                 <th className="px-6 py-4">Assigned Staff</th>
                 <th className="px-6 py-4">Destination</th>
                 <th className="px-6 py-4">Pickup Date</th>
-                <th className="px-6 py-4">Last Update</th>
                 <th className="px-6 py-4">Action</th>
               </tr>
             </thead>
@@ -106,27 +132,27 @@ function CasesPage() {
                   className="border-t border-slate-100 hover:bg-slate-50"
                 >
                   <td className="px-6 py-5 font-bold text-slate-950">
-                    {item.id}
+                    {item.caseNumber}
                   </td>
 
-                  <td className="px-6 py-5 text-slate-700">{item.client}</td>
+                  <td className="px-6 py-5 text-slate-700">
+                    {item.clientName}
+                  </td>
 
                   <td className="px-6 py-5">
                     <StatusBadge status={item.status} />
                   </td>
 
-                  <td className="px-6 py-5 text-slate-700">{item.staff}</td>
+                  <td className="px-6 py-5 text-slate-700">
+                    {item.staffName || "Unassigned"}
+                  </td>
 
                   <td className="px-6 py-5 text-slate-700">
                     {item.destination}
                   </td>
 
                   <td className="px-6 py-5 text-slate-700">
-                    {item.pickupDate}
-                  </td>
-
-                  <td className="px-6 py-5 text-slate-700">
-                    {item.lastUpdate}
+                    {formatDate(item.pickupDate)}
                   </td>
 
                   <td className="px-6 py-5">
@@ -142,7 +168,13 @@ function CasesPage() {
             </tbody>
           </table>
 
-          {filteredCases.length === 0 && (
+          {isLoading && (
+            <div className="p-8 text-center font-semibold text-slate-500">
+              Loading cases from database...
+            </div>
+          )}
+
+          {!isLoading && filteredCases.length === 0 && (
             <div className="p-8 text-center font-semibold text-slate-500">
               No cases match your search or filter.
             </div>
@@ -164,6 +196,7 @@ function StatusBadge({ status }: { status: string }) {
     Scheduled: "bg-purple-100 text-purple-700",
     Pending: "bg-orange-100 text-orange-700",
     "In Progress": "bg-sky-100 text-sky-700",
+    "In Transit": "bg-blue-100 text-blue-700",
     Completed: "bg-green-100 text-green-700",
     Cancelled: "bg-red-100 text-red-700",
   };
@@ -177,6 +210,20 @@ function StatusBadge({ status }: { status: string }) {
       {status}
     </span>
   );
+}
+
+function formatDate(dateValue: string) {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Not scheduled";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export default CasesPage;

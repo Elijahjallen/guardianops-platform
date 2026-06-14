@@ -1,18 +1,46 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import AddClientModal from "../components/clients/AddClientModal";
 import { useCaseStore } from "../store/caseStore";
-import { useClientStore } from "../store/clientStore";
+import { getClients } from "../services/api";
+
+type ApiClient = {
+  id: string;
+  clientCode: string;
+  name: string;
+  type: string;
+  contact: string;
+  phone: string;
+  email: string;
+  location: string;
+  createdAt: string;
+};
 
 function ClientDirectoryPage() {
   const navigate = useNavigate();
 
   const cases = useCaseStore((state) => state.cases);
-  const clients = useClientStore((state) => state.clients);
 
+  const [clients, setClients] = useState<ApiClient[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
+
+  useEffect(() => {
+    async function loadClients() {
+      try {
+        const data = await getClients();
+        setClients(data);
+      } catch (error) {
+        console.error("Failed to load clients:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadClients();
+  }, []);
 
   return (
     <DashboardLayout>
@@ -67,7 +95,7 @@ function ClientDirectoryPage() {
                     className="border-t border-slate-100 hover:bg-slate-50"
                   >
                     <td className="px-6 py-5 font-bold text-slate-950">
-                      {client.id}
+                      {client.clientCode}
                     </td>
 
                     <td className="px-6 py-5 font-semibold text-slate-800">
@@ -114,7 +142,13 @@ function ClientDirectoryPage() {
             </tbody>
           </table>
 
-          {clients.length === 0 && (
+          {isLoading && (
+            <div className="p-8 text-center font-semibold text-slate-500">
+              Loading clients from database...
+            </div>
+          )}
+
+          {!isLoading && clients.length === 0 && (
             <div className="p-8 text-center font-semibold text-slate-500">
               No clients found.
             </div>

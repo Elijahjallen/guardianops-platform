@@ -77,4 +77,4 @@ function formatPickupDate(dateValue: string) {
   };
 }
 
-export default UpcomingPickups;
+export default UpcomingPickups; 

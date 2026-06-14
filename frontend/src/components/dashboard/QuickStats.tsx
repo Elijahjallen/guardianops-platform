@@ -1,5 +1,6 @@
-import { useCaseStore } from "../../store/caseStore";
-import { useStaffStore } from "../../store/staffStore";
+import { useEffect, useState } from "react";
+
+import { getCases, getClients, getNotifications, getStaff } from "../../services/api";
 
 import CasesIcon from "../../assets/icons/Cases-Icon.svg";
 import PendingQuotesIcon from "../../assets/icons/Pending-Quotes-Icon.svg";
@@ -10,14 +11,49 @@ import UpArrowIcon from "../../assets/icons/Up-Arrow-Icon.svg";
 import DownArrowIcon from "../../assets/icons/Down-Arrow-Notifications.svg";
 
 function QuickStats() {
-  const cases = useCaseStore((state) => state.cases);
-  const staff = useStaffStore((state) => state.staff);
+  const [activeCases, setActiveCases] = useState(0);
+  const [pendingCases, setPendingCases] = useState(0);
+  const [activeStaff, setActiveStaff] = useState(0);
+  const [openNotifications, setOpenNotifications] = useState(0);
 
-  const activeCases = cases.length;
-  const pendingCases = cases.filter((item) => item.status === "Pending").length;
-  const activeStaff = staff.filter(
-    (member) => member.status === "Available" || member.status === "En Route"
-  ).length;
+  useEffect(() => {
+    async function loadDashboardStats() {
+      try {
+        const [cases, staff, clients, notifications] = await Promise.all([
+          getCases(),
+          getStaff(),
+          getClients(),
+          getNotifications(),
+        ]);
+
+        console.log("Dashboard API data:", {
+          cases,
+          staff,
+          clients,
+          notifications,
+        });
+
+        setActiveCases(cases.length);
+
+        setPendingCases(
+          cases.filter((item: any) => item.status === "Pending").length
+        );
+
+        setActiveStaff(
+          staff.filter(
+            (member: any) =>
+              member.status === "Available" || member.status === "En Route"
+          ).length
+        );
+
+        setOpenNotifications(notifications.length);
+      } catch (error) {
+        console.error("Failed to load dashboard stats:", error);
+      }
+    }
+
+    loadDashboardStats();
+  }, []);
 
   const stats = [
     {
@@ -29,7 +65,7 @@ function QuickStats() {
       iconBackground: "bg-blue-50",
     },
     {
-      title: "Pending Quotes",
+      title: "Pending Cases",
       value: pendingCases.toString(),
       change: "5",
       direction: "up",
@@ -46,7 +82,7 @@ function QuickStats() {
     },
     {
       title: "Open Notifications",
-      value: "21",
+      value: openNotifications.toString(),
       change: "5",
       direction: "down",
       icon: OpenNotificationsIcon,

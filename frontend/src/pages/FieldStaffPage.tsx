@@ -1,14 +1,43 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import AddStaffModal from "../components/staff/AddStaffModal";
-import { useStaffStore, type StaffStatus } from "../store/staffStore";
+import { getStaff } from "../services/api";
+
+type ApiStaffMember = {
+  id: string;
+  employeeId: string;
+  name: string;
+  role: string;
+  status: string;
+  phone: string;
+  email: string;
+  homeAirport: string;
+  createdAt: string;
+};
 
 function FieldStaffPage() {
   const navigate = useNavigate();
-  const staff = useStaffStore((state) => state.staff);
+
+  const [staff, setStaff] = useState<ApiStaffMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
+
+  useEffect(() => {
+    async function loadStaff() {
+      try {
+        const data = await getStaff();
+        setStaff(data);
+      } catch (error) {
+        console.error("Failed to load staff:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadStaff();
+  }, []);
 
   return (
     <DashboardLayout>
@@ -16,7 +45,8 @@ function FieldStaffPage() {
         <div>
           <h1 className="text-4xl font-bold text-slate-950">Field Staff</h1>
           <p className="mt-2 text-slate-500">
-            Manage transport staff availability, assignments, and contact information.
+            Manage transport staff availability, assignments, and contact
+            information.
           </p>
         </div>
 
@@ -32,33 +62,40 @@ function FieldStaffPage() {
         <SummaryCard title="Total Staff" value={staff.length.toString()} />
         <SummaryCard
           title="Available"
-          value={staff.filter((item) => item.status === "Available").length.toString()}
+          value={staff
+            .filter((item) => item.status === "Available")
+            .length.toString()}
         />
         <SummaryCard
           title="En Route"
-          value={staff.filter((item) => item.status === "En Route").length.toString()}
+          value={staff
+            .filter((item) => item.status === "En Route")
+            .length.toString()}
         />
         <SummaryCard
           title="Off Duty"
-          value={staff.filter((item) => item.status === "Off Duty").length.toString()}
+          value={staff
+            .filter((item) => item.status === "Off Duty")
+            .length.toString()}
         />
       </section>
 
       <section className="mt-6 rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 p-6">
-          <h2 className="text-2xl font-bold text-slate-950">Staff Directory</h2>
+          <h2 className="text-2xl font-bold text-slate-950">
+            Staff Directory
+          </h2>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px] text-left">
             <thead className="bg-slate-50 text-sm font-bold uppercase text-slate-600">
               <tr>
-                <th className="px-6 py-4">Staff ID</th>
+                <th className="px-6 py-4">Employee ID</th>
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Role</th>
                 <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Active Cases</th>
-                <th className="px-6 py-4">Location</th>
+                <th className="px-6 py-4">Home Airport</th>
                 <th className="px-6 py-4">Contact</th>
                 <th className="px-6 py-4">Action</th>
               </tr>
@@ -71,7 +108,7 @@ function FieldStaffPage() {
                   className="border-t border-slate-100 hover:bg-slate-50"
                 >
                   <td className="px-6 py-5 font-bold text-slate-950">
-                    {member.id}
+                    {member.employeeId}
                   </td>
 
                   <td className="px-6 py-5 font-semibold text-slate-800">
@@ -85,11 +122,7 @@ function FieldStaffPage() {
                   </td>
 
                   <td className="px-6 py-5 text-slate-700">
-                    {member.activeCases}
-                  </td>
-
-                  <td className="px-6 py-5 text-slate-700">
-                    {member.location}
+                    {member.homeAirport}
                   </td>
 
                   <td className="px-6 py-5">
@@ -111,6 +144,18 @@ function FieldStaffPage() {
               ))}
             </tbody>
           </table>
+
+          {isLoading && (
+            <div className="p-8 text-center font-semibold text-slate-500">
+              Loading staff from database...
+            </div>
+          )}
+
+          {!isLoading && staff.length === 0 && (
+            <div className="p-8 text-center font-semibold text-slate-500">
+              No staff found.
+            </div>
+          )}
         </div>
       </section>
 
@@ -131,8 +176,8 @@ function SummaryCard({ title, value }: { title: string; value: string }) {
   );
 }
 
-function StatusBadge({ status }: { status: StaffStatus }) {
-  const styles: Record<StaffStatus, string> = {
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
     Available: "bg-green-100 text-green-700",
     "En Route": "bg-blue-100 text-blue-700",
     Busy: "bg-orange-100 text-orange-700",
@@ -140,7 +185,11 @@ function StatusBadge({ status }: { status: StaffStatus }) {
   };
 
   return (
-    <span className={`rounded-lg px-3 py-1 text-sm font-bold ${styles[status]}`}>
+    <span
+      className={`rounded-lg px-3 py-1 text-sm font-bold ${
+        styles[status] || "bg-slate-100 text-slate-700"
+      }`}
+    >
       {status}
     </span>
   );

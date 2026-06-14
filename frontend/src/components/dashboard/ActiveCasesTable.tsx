@@ -1,9 +1,37 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCaseStore } from "../../store/caseStore";
+import { getCases } from "../../services/api";
+
+type ApiCase = {
+  id: string;
+  caseNumber: string;
+  clientName: string;
+  status: string;
+  destination: string;
+  pickupDate: string;
+  staffName?: string | null;
+  createdAt: string;
+};
 
 function ActiveCasesTable() {
   const navigate = useNavigate();
-  const cases = useCaseStore((state) => state.cases);
+  const [cases, setCases] = useState<ApiCase[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadCases() {
+      try {
+        const data = await getCases();
+        setCases(data);
+      } catch (error) {
+        console.error("Failed to load active cases:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadCases();
+  }, []);
 
   const visibleCases = cases.slice(0, 8);
 
@@ -52,9 +80,6 @@ function ActiveCasesTable() {
                 Pickup Date
               </th>
               <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-slate-500">
-                Last Update
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-slate-500">
                 Action
               </th>
             </tr>
@@ -67,27 +92,27 @@ function ActiveCasesTable() {
                 className="border-b border-slate-100 hover:bg-slate-50"
               >
                 <td className="px-4 py-5 font-bold text-slate-900">
-                  {item.id}
+                  {item.caseNumber}
                 </td>
 
-                <td className="px-4 py-5 text-slate-700">{item.client}</td>
+                <td className="px-4 py-5 text-slate-700">
+                  {item.clientName}
+                </td>
 
                 <td className="px-4 py-5">
                   <StatusBadge status={item.status} />
                 </td>
 
-                <td className="px-4 py-5 text-slate-700">{item.staff}</td>
+                <td className="px-4 py-5 text-slate-700">
+                  {item.staffName || "Unassigned"}
+                </td>
 
                 <td className="px-4 py-5 text-slate-700">
                   {item.destination}
                 </td>
 
                 <td className="px-4 py-5 text-slate-700">
-                  {item.pickupDate}
-                </td>
-
-                <td className="px-4 py-5 text-slate-700">
-                  {item.lastUpdate}
+                  {formatDate(item.pickupDate)}
                 </td>
 
                 <td className="px-4 py-5">
@@ -103,7 +128,13 @@ function ActiveCasesTable() {
           </tbody>
         </table>
 
-        {visibleCases.length === 0 && (
+        {isLoading && (
+          <div className="p-8 text-center font-semibold text-slate-500">
+            Loading cases from database...
+          </div>
+        )}
+
+        {!isLoading && visibleCases.length === 0 && (
           <div className="p-8 text-center font-semibold text-slate-500">
             No active cases available.
           </div>
@@ -112,7 +143,8 @@ function ActiveCasesTable() {
 
       <div className="flex items-center justify-between border-t border-slate-200 p-5 text-sm text-slate-600">
         <span>
-          Showing 1 to {visibleCases.length} of {cases.length} Results
+          Showing {visibleCases.length === 0 ? 0 : 1} to {visibleCases.length} of{" "}
+          {cases.length} Results
         </span>
 
         <div className="flex items-center gap-2">
@@ -143,6 +175,7 @@ function StatusBadge({ status }: { status: string }) {
     Scheduled: "bg-purple-100 text-purple-700",
     Pending: "bg-orange-100 text-orange-700",
     "In Progress": "bg-sky-100 text-sky-700",
+    "In Transit": "bg-blue-100 text-blue-700",
     Completed: "bg-green-100 text-green-700",
     Cancelled: "bg-red-100 text-red-700",
   };
@@ -156,6 +189,20 @@ function StatusBadge({ status }: { status: string }) {
       {status}
     </span>
   );
+}
+
+function formatDate(dateValue: string) {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Not scheduled";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export default ActiveCasesTable;
