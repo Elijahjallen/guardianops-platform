@@ -1,23 +1,37 @@
 import { useEffect, useState } from "react";
-import { useClientStore, type Client } from "../../store/clientStore";
+import { updateClient } from "../../services/api";
+
+type ApiClient = {
+  id: string;
+  clientCode: string;
+  name: string;
+  type: string;
+  contact: string;
+  phone: string;
+  email: string;
+  location: string;
+};
 
 type EditClientModalProps = {
   isOpen: boolean;
-  client: Client | null;
+  client: ApiClient | null;
   onClose: () => void;
+  onClientUpdated?: () => void;
 };
 
-function EditClientModal({ isOpen, client, onClose }: EditClientModalProps) {
-  const updateClient = useClientStore((state) => state.updateClient);
-
+function EditClientModal({
+  isOpen,
+  client,
+  onClose,
+  onClientUpdated,
+}: EditClientModalProps) {
   const [name, setName] = useState("");
   const [type, setType] = useState("");
   const [contact, setContact] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [location, setLocation] = useState("");
-  const [address, setAddress] = useState("");
-  const [notes, setNotes] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (client) {
@@ -27,26 +41,34 @@ function EditClientModal({ isOpen, client, onClose }: EditClientModalProps) {
       setPhone(client.phone);
       setEmail(client.email);
       setLocation(client.location);
-      setAddress(client.address);
-      setNotes(client.notes);
     }
   }, [client]);
 
   if (!isOpen || !client) return null;
 
-  function handleSaveChanges() {
-    updateClient(client.id, {
-      name,
-      type,
-      contact,
-      phone,
-      email,
-      location,
-      address,
-      notes,
-    });
+  async function handleSaveChanges() {
+    setErrorMessage("");
 
-    onClose();
+    try {
+      await updateClient(client.id, {
+        clientCode: client.clientCode,
+        name,
+        type,
+        contact,
+        phone,
+        email,
+        location,
+      });
+
+      if (onClientUpdated) {
+        onClientUpdated();
+      }
+
+      onClose();
+    } catch (error) {
+      console.error("Failed to update client:", error);
+      setErrorMessage("Failed to update client. Check backend server.");
+    }
   }
 
   return (
@@ -57,8 +79,9 @@ function EditClientModal({ isOpen, client, onClose }: EditClientModalProps) {
             <h2 className="text-3xl font-bold text-slate-950">
               Edit Client
             </h2>
+
             <p className="mt-1 text-slate-500">
-              Update client organization and contact details.
+              Update client details directly in PostgreSQL.
             </p>
           </div>
 
@@ -70,21 +93,23 @@ function EditClientModal({ isOpen, client, onClose }: EditClientModalProps) {
           </button>
         </div>
 
+        {errorMessage && (
+          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Client Name" value={name} onChange={setName} />
           <Field label="Client Type" value={type} onChange={setType} />
-          <Field label="Primary Contact" value={contact} onChange={setContact} />
+          <Field
+            label="Primary Contact"
+            value={contact}
+            onChange={setContact}
+          />
           <Field label="Phone" value={phone} onChange={setPhone} />
           <Field label="Email" value={email} onChange={setEmail} />
           <Field label="Location" value={location} onChange={setLocation} />
-        </div>
-
-        <div className="mt-5">
-          <TextArea label="Address" value={address} onChange={setAddress} />
-        </div>
-
-        <div className="mt-5">
-          <TextArea label="Notes" value={notes} onChange={setNotes} />
         </div>
 
         <div className="mt-8 flex justify-end gap-4">
@@ -119,31 +144,11 @@ function Field({
   return (
     <div>
       <label className="mb-2 block font-bold text-slate-950">{label}</label>
+
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
-      />
-    </div>
-  );
-}
-
-function TextArea({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div>
-      <label className="mb-2 block font-bold text-slate-950">{label}</label>
-      <textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-24 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none"
       />
     </div>
   );

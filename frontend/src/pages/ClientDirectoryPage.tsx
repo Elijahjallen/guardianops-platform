@@ -27,18 +27,19 @@ function ClientDirectoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
 
-  useEffect(() => {
-    async function loadClients() {
-      try {
-        const data = await getClients();
-        setClients(data);
-      } catch (error) {
-        console.error("Failed to load clients:", error);
-      } finally {
-        setIsLoading(false);
-      }
+  async function loadClients() {
+    try {
+      setIsLoading(true);
+      const data = await getClients();
+      setClients(data);
+    } catch (error) {
+      console.error("Failed to load clients:", error);
+    } finally {
+      setIsLoading(false);
     }
+  }
 
+  useEffect(() => {
     loadClients();
   }, []);
 
@@ -159,6 +160,7 @@ function ClientDirectoryPage() {
       <AddClientModal
         isOpen={isAddClientOpen}
         onClose={() => setIsAddClientOpen(false)}
+        onClientCreated={loadClients}
       />
     </DashboardLayout>
   );

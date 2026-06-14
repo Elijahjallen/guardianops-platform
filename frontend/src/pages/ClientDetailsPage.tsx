@@ -1,28 +1,66 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import EditClientModal from "../components/clients/EditClientModal";
-import { useCaseStore } from "../store/caseStore";
-import { useClientStore } from "../store/clientStore";
+import { getCases, getClientById, deleteClient } from "../services/api";
+
+type ApiClient = {
+  id: string;
+  clientCode: string;
+  name: string;
+  type: string;
+  contact: string;
+  phone: string;
+  email: string;
+  location: string;
+};
+
+type ApiCase = {
+  id: string;
+  caseNumber: string;
+  clientName: string;
+  status: string;
+  destination: string;
+  pickupDate: string;
+  staffName?: string | null;
+};
 
 function ClientDetailsPage() {
   const navigate = useNavigate();
   const { clientId } = useParams();
 
-  const cases = useCaseStore((state) => state.cases);
-  const clients = useClientStore((state) => state.clients);
-  const deleteClient = useClientStore((state) => state.deleteClient);
-
+  const [client, setClient] = useState<ApiClient | null>(null);
+  const [cases, setCases] = useState<ApiCase[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  const client = clients.find((item) => item.id === clientId);
+  async function loadClientDetails() {
+    if (!clientId) return;
 
-  const clientCases = client
-    ? cases.filter((caseItem) => caseItem.client === client.name)
-    : [];
+    try {
+      setIsLoading(true);
 
-  function handleDeleteClient() {
+      const [clientData, caseData] = await Promise.all([
+        getClientById(clientId),
+        getCases(),
+      ]);
+
+      setClient(clientData);
+      setCases(caseData);
+    } catch (error) {
+      console.error("Failed to load client details:", error);
+      setClient(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadClientDetails();
+  }, [clientId]);
+
+  async function handleDeleteClient() {
     if (!client) return;
 
     const confirmed = window.confirm(
@@ -31,8 +69,26 @@ function ClientDetailsPage() {
 
     if (!confirmed) return;
 
-    deleteClient(client.id);
-    navigate("/clients");
+    try {
+      await deleteClient(client.id);
+      navigate("/clients");
+    } catch (error) {
+      console.error("Failed to delete client:", error);
+    }
+  }
+
+  const clientCases = client
+    ? cases.filter((caseItem) => caseItem.clientName === client.name)
+    : [];
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 font-semibold text-slate-500 shadow-sm">
+          Loading client from database...
+        </div>
+      </DashboardLayout>
+    );
   }
 
   if (!client) {
@@ -70,7 +126,7 @@ function ClientDetailsPage() {
           </h1>
 
           <p className="mt-2 text-slate-500">
-            Client profile, contact details, notes, and associated cases.
+            Database-backed client profile, contact details, and associated cases.
           </p>
         </div>
 
@@ -104,7 +160,7 @@ function ClientDetailsPage() {
           <p className="mt-1 text-slate-500">{client.type}</p>
 
           <div className="mt-8 space-y-5">
-            <Detail label="Client ID" value={client.id} />
+            <Detail label="Client Code" value={client.clientCode} />
             <Detail label="Location" value={client.location} />
             <Detail label="Open Cases" value={clientCases.length.toString()} />
           </div>
@@ -116,7 +172,7 @@ function ClientDetailsPage() {
               <Detail label="Client Name" value={client.name} />
               <Detail label="Client Type" value={client.type} />
               <Detail label="Location" value={client.location} />
-              <Detail label="Address" value={client.address} />
+              <Detail label="Client Code" value={client.clientCode} />
             </DetailGrid>
           </InfoCard>
 
@@ -126,10 +182,6 @@ function ClientDetailsPage() {
               <Detail label="Phone" value={client.phone} />
               <Detail label="Email" value={client.email} />
             </DetailGrid>
-          </InfoCard>
-
-          <InfoCard title="Client Notes">
-            <p className="font-semibold text-slate-700">{client.notes}</p>
           </InfoCard>
 
           <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -159,7 +211,7 @@ function ClientDetailsPage() {
                       className="border-t border-slate-100 hover:bg-slate-50"
                     >
                       <td className="px-6 py-5 font-bold text-slate-950">
-                        {caseItem.id}
+                        {caseItem.caseNumber}
                       </td>
 
                       <td className="px-6 py-5 text-slate-700">
@@ -167,7 +219,7 @@ function ClientDetailsPage() {
                       </td>
 
                       <td className="px-6 py-5 text-slate-700">
-                        {caseItem.staff || "Unassigned"}
+                        {caseItem.staffName || "Unassigned"}
                       </td>
 
                       <td className="px-6 py-5 text-slate-700">
@@ -175,7 +227,7 @@ function ClientDetailsPage() {
                       </td>
 
                       <td className="px-6 py-5 text-slate-700">
-                        {caseItem.pickupDate}
+                        {formatDate(caseItem.pickupDate)}
                       </td>
 
                       <td className="px-6 py-5">
@@ -205,6 +257,7 @@ function ClientDetailsPage() {
         isOpen={isEditOpen}
         client={client}
         onClose={() => setIsEditOpen(false)}
+        onClientUpdated={loadClientDetails}
       />
     </DashboardLayout>
   );
@@ -235,10 +288,20 @@ function Detail({ label, value }: { label: string; value: string }) {
       <p className="text-sm font-bold uppercase tracking-wide text-slate-500">
         {label}
       </p>
-
       <p className="mt-1 font-semibold text-slate-950">{value}</p>
     </div>
   );
+}
+
+function formatDate(dateValue: string) {
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return "Not scheduled";
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function getInitials(name: string) {

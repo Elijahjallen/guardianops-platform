@@ -1,28 +1,67 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import EditStaffModal from "../components/staff/EditStaffModal";
-import { useCaseStore } from "../store/caseStore";
-import { useStaffStore, type StaffStatus } from "../store/staffStore";
+import { deleteStaff, getCases, getStaffById } from "../services/api";
+
+type ApiStaffMember = {
+  id: string;
+  employeeId: string;
+  name: string;
+  role: string;
+  status: string;
+  phone: string;
+  email: string;
+  homeAirport: string;
+  createdAt: string;
+};
+
+type ApiCase = {
+  id: string;
+  caseNumber: string;
+  clientName: string;
+  status: string;
+  destination: string;
+  pickupDate: string;
+  staffName?: string | null;
+};
 
 function StaffDetailsPage() {
   const navigate = useNavigate();
   const { staffId } = useParams();
 
-  const staff = useStaffStore((state) => state.staff);
-  const deleteStaff = useStaffStore((state) => state.deleteStaff);
-  const cases = useCaseStore((state) => state.cases);
-
+  const [staffMember, setStaffMember] = useState<ApiStaffMember | null>(null);
+  const [cases, setCases] = useState<ApiCase[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  const staffMember = staff.find((member) => member.id === staffId);
+  async function loadStaffDetails() {
+    if (!staffId) return;
 
-  const assignedCases = staffMember
-    ? cases.filter((caseItem) => caseItem.staff === staffMember.name)
-    : [];
+    try {
+      setIsLoading(true);
 
-  function handleDeleteStaff() {
+      const [staffData, caseData] = await Promise.all([
+        getStaffById(staffId),
+        getCases(),
+      ]);
+
+      setStaffMember(staffData);
+      setCases(caseData);
+    } catch (error) {
+      console.error("Failed to load staff details:", error);
+      setStaffMember(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadStaffDetails();
+  }, [staffId]);
+
+  async function handleDeleteStaff() {
     if (!staffMember) return;
 
     const confirmed = window.confirm(
@@ -31,8 +70,26 @@ function StaffDetailsPage() {
 
     if (!confirmed) return;
 
-    deleteStaff(staffMember.id);
-    navigate("/field-staff");
+    try {
+      await deleteStaff(staffMember.id);
+      navigate("/field-staff");
+    } catch (error) {
+      console.error("Failed to delete staff:", error);
+    }
+  }
+
+  const assignedCases = staffMember
+    ? cases.filter((caseItem) => caseItem.staffName === staffMember.name)
+    : [];
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 font-semibold text-slate-500 shadow-sm">
+          Loading staff profile from database...
+        </div>
+      </DashboardLayout>
+    );
   }
 
   if (!staffMember) {
@@ -70,7 +127,7 @@ function StaffDetailsPage() {
           </h1>
 
           <p className="mt-2 text-slate-500">
-            Staff profile, travel credentials, employment details, and assignments.
+            Database-backed staff profile, assignments, and contact information.
           </p>
         </div>
 
@@ -108,13 +165,10 @@ function StaffDetailsPage() {
           </div>
 
           <div className="mt-8 space-y-5">
-            <Detail label="Staff ID" value={staffMember.id} />
-            <Detail label="Date of Hire" value={staffMember.dateOfHire} />
-            <Detail label="Current Location" value={staffMember.location} />
-            <Detail
-              label="Active Cases"
-              value={assignedCases.length.toString()}
-            />
+            <Detail label="Employee ID" value={staffMember.employeeId} />
+            <Detail label="Home Airport" value={staffMember.homeAirport} />
+            <Detail label="Active Cases" value={assignedCases.length.toString()} />
+            <Detail label="Created" value={formatDate(staffMember.createdAt)} />
           </div>
         </aside>
 
@@ -123,53 +177,15 @@ function StaffDetailsPage() {
             <DetailGrid>
               <Detail label="Full Name" value={staffMember.name} />
               <Detail label="Role" value={staffMember.role} />
-              <Detail label="Date of Birth" value={staffMember.dateOfBirth} />
               <Detail label="Status" value={staffMember.status} />
-            </DetailGrid>
-          </InfoCard>
-
-          <InfoCard title="Employment Details">
-            <DetailGrid>
-              <Detail label="Date of Hire" value={staffMember.dateOfHire} />
-              <Detail label="Current Location" value={staffMember.location} />
-              <Detail
-                label="Active Cases"
-                value={assignedCases.length.toString()}
-              />
               <Detail label="Home Airport" value={staffMember.homeAirport} />
-            </DetailGrid>
-          </InfoCard>
-
-          <InfoCard title="Travel Credentials">
-            <DetailGrid>
-              <Detail
-                label="Driver's License"
-                value={staffMember.driversLicense}
-              />
-              <Detail label="Passport" value={staffMember.passport} />
-              <Detail label="Home Airport" value={staffMember.homeAirport} />
-            </DetailGrid>
-          </InfoCard>
-
-          <InfoCard title="Education & Certifications">
-            <DetailGrid>
-              <ListDetail
-                label="Certifications"
-                values={staffMember.certifications}
-              />
-              <ListDetail label="Degrees" values={staffMember.degrees} />
             </DetailGrid>
           </InfoCard>
 
           <InfoCard title="Contact Information">
             <DetailGrid>
-              <Detail label="Contact Number" value={staffMember.phone} />
+              <Detail label="Phone" value={staffMember.phone} />
               <Detail label="Email" value={staffMember.email} />
-              <Detail label="Home Address" value={staffMember.homeAddress} />
-              <Detail
-                label="Emergency Contact"
-                value={staffMember.emergencyContact}
-              />
             </DetailGrid>
           </InfoCard>
 
@@ -200,17 +216,15 @@ function StaffDetailsPage() {
                       className="border-t border-slate-100 hover:bg-slate-50"
                     >
                       <td className="px-6 py-5 font-bold text-slate-950">
-                        {caseItem.id}
+                        {caseItem.caseNumber}
                       </td>
 
                       <td className="px-6 py-5 text-slate-700">
-                        {caseItem.client}
+                        {caseItem.clientName}
                       </td>
 
                       <td className="px-6 py-5">
-                        <span className="rounded-lg bg-blue-100 px-3 py-1 text-sm font-bold text-blue-700">
-                          {caseItem.status}
-                        </span>
+                        <StatusBadge status={caseItem.status} />
                       </td>
 
                       <td className="px-6 py-5 text-slate-700">
@@ -218,7 +232,7 @@ function StaffDetailsPage() {
                       </td>
 
                       <td className="px-6 py-5 text-slate-700">
-                        {caseItem.pickupDate}
+                        {formatDate(caseItem.pickupDate)}
                       </td>
 
                       <td className="px-6 py-5">
@@ -236,7 +250,7 @@ function StaffDetailsPage() {
 
               {assignedCases.length === 0 && (
                 <div className="p-8 text-center font-semibold text-slate-500">
-                  No active cases assigned to this staff member.
+                  No cases assigned to this staff member.
                 </div>
               )}
             </div>
@@ -248,6 +262,7 @@ function StaffDetailsPage() {
         isOpen={isEditOpen}
         staffMember={staffMember}
         onClose={() => setIsEditOpen(false)}
+        onStaffUpdated={loadStaffDetails}
       />
     </DashboardLayout>
   );
@@ -279,42 +294,50 @@ function Detail({ label, value }: { label: string; value: string }) {
         {label}
       </p>
 
-      <p className="mt-1 font-semibold text-slate-950">{value}</p>
-    </div>
-  );
-}
-
-function ListDetail({ label, values }: { label: string; values: string[] }) {
-  return (
-    <div>
-      <p className="text-sm font-bold uppercase tracking-wide text-slate-500">
-        {label}
+      <p className="mt-1 font-semibold text-slate-950">
+        {value || "Not provided"}
       </p>
-
-      <ul className="mt-2 list-disc space-y-1 pl-5 font-semibold text-slate-950">
-        {values.map((value) => (
-          <li key={value}>{value}</li>
-        ))}
-      </ul>
     </div>
   );
 }
 
-function StatusBadge({ status }: { status: StaffStatus }) {
-  const styles: Record<StaffStatus, string> = {
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
     Available: "bg-green-100 text-green-700",
     "En Route": "bg-blue-100 text-blue-700",
     Busy: "bg-orange-100 text-orange-700",
     "Off Duty": "bg-slate-100 text-slate-700",
+    Scheduled: "bg-purple-100 text-purple-700",
+    Pending: "bg-orange-100 text-orange-700",
+    "In Progress": "bg-sky-100 text-sky-700",
+    "In Transit": "bg-blue-100 text-blue-700",
+    Completed: "bg-green-100 text-green-700",
+    Cancelled: "bg-red-100 text-red-700",
   };
 
   return (
     <span
-      className={`rounded-lg px-3 py-1 text-sm font-bold ${styles[status]}`}
+      className={`rounded-lg px-3 py-1 text-sm font-bold ${
+        styles[status] || "bg-slate-100 text-slate-700"
+      }`}
     >
       {status}
     </span>
   );
+}
+
+function formatDate(dateValue: string) {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Not scheduled";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function getInitials(name: string) {

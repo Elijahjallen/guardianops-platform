@@ -1,115 +1,90 @@
 import { useEffect, useState } from "react";
-import {
-  useStaffStore,
-  type StaffMember,
-  type StaffStatus,
-} from "../../store/staffStore";
+import { updateStaff } from "../../services/api";
+
+type ApiStaffMember = {
+  id: string;
+  employeeId: string;
+  name: string;
+  role: string;
+  status: string;
+  phone: string;
+  email: string;
+  homeAirport: string;
+};
 
 type EditStaffModalProps = {
   isOpen: boolean;
-  staffMember: StaffMember | null;
+  staffMember: ApiStaffMember | null;
   onClose: () => void;
+  onStaffUpdated?: () => void;
 };
 
 function EditStaffModal({
   isOpen,
   staffMember,
   onClose,
+  onStaffUpdated,
 }: EditStaffModalProps) {
-  const updateStaff = useStaffStore((state) => state.updateStaff);
-
+  const [employeeId, setEmployeeId] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
-  const [status, setStatus] = useState<StaffStatus>("Available");
-  const [location, setLocation] = useState("");
+  const [status, setStatus] = useState("Available");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [driversLicense, setDriversLicense] = useState("");
-  const [passport, setPassport] = useState("");
   const [homeAirport, setHomeAirport] = useState("");
-  const [certifications, setCertifications] = useState("");
-  const [degrees, setDegrees] = useState("");
-  const [dateOfHire, setDateOfHire] = useState("");
-  const [homeAddress, setHomeAddress] = useState("");
-  const [emergencyContact, setEmergencyContact] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (staffMember) {
+      setEmployeeId(staffMember.employeeId);
       setName(staffMember.name);
       setRole(staffMember.role);
       setStatus(staffMember.status);
-      setLocation(staffMember.location);
       setPhone(staffMember.phone);
       setEmail(staffMember.email);
-      setDateOfBirth(staffMember.dateOfBirth);
-      setDriversLicense(staffMember.driversLicense);
-      setPassport(staffMember.passport);
       setHomeAirport(staffMember.homeAirport);
-      setCertifications(staffMember.certifications.join(", "));
-      setDegrees(staffMember.degrees.join(", "));
-      setDateOfHire(staffMember.dateOfHire);
-      setHomeAddress(staffMember.homeAddress);
-      setEmergencyContact(staffMember.emergencyContact);
     }
   }, [staffMember]);
 
-  if (!isOpen || !staffMember) {
-    return null;
-  }
+  if (!isOpen || !staffMember) return null;
 
-  function handleSaveChanges() {
-    updateStaff(staffMember.id, {
-      name,
-      role,
-      status,
-      location,
-      phone,
-      email,
-      dateOfBirth,
-      driversLicense,
-      passport,
-      homeAirport,
-      certifications: certifications
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      degrees: degrees
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      dateOfHire,
-      homeAddress,
-      emergencyContact,
-    });
+  async function handleSaveChanges() {
+    setErrorMessage("");
 
-    onClose();
+    try {
+      await updateStaff(staffMember.id, {
+        employeeId,
+        name,
+        role,
+        status,
+        phone,
+        email,
+        homeAirport,
+      });
+
+      onStaffUpdated?.();
+      onClose();
+    } catch (error) {
+      console.error("Failed to update staff:", error);
+      setErrorMessage("Failed to update staff. Check backend server.");
+    }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4">
-      <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold text-slate-950">
-              Edit Staff Profile
-            </h2>
+      <div className="w-full max-w-3xl rounded-3xl bg-white p-8 shadow-2xl">
+        <h2 className="text-3xl font-bold text-slate-950">
+          Edit Staff Member
+        </h2>
 
-            <p className="mt-1 text-slate-500">
-              Update staff profile, credentials, contact details, and employment
-              information.
-            </p>
+        {errorMessage && (
+          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700">
+            {errorMessage}
           </div>
+        )}
 
-          <button
-            onClick={onClose}
-            className="text-2xl font-bold text-slate-500 hover:text-slate-900"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="mt-6 grid gap-5 md:grid-cols-2">
+          <Field label="Employee ID" value={employeeId} onChange={setEmployeeId} />
           <Field label="Full Name" value={name} onChange={setName} />
           <Field label="Role" value={role} onChange={setRole} />
 
@@ -120,9 +95,7 @@ function EditStaffModal({
 
             <select
               value={status}
-              onChange={(event) =>
-                setStatus(event.target.value as StaffStatus)
-              }
+              onChange={(event) => setStatus(event.target.value)}
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
             >
               <option>Available</option>
@@ -132,63 +105,13 @@ function EditStaffModal({
             </select>
           </div>
 
-          <Field label="Current Location" value={location} onChange={setLocation} />
-          <Field label="Date of Birth" value={dateOfBirth} onChange={setDateOfBirth} />
-          <Field label="Date of Hire" value={dateOfHire} onChange={setDateOfHire} />
-          <Field
-            label="Driver's License"
-            value={driversLicense}
-            onChange={setDriversLicense}
-          />
-          <Field label="Passport" value={passport} onChange={setPassport} />
-          <Field label="Home Airport" value={homeAirport} onChange={setHomeAirport} />
-          <Field label="Contact Number" value={phone} onChange={setPhone} />
+          <Field label="Phone" value={phone} onChange={setPhone} />
           <Field label="Email" value={email} onChange={setEmail} />
           <Field
-            label="Emergency Contact"
-            value={emergencyContact}
-            onChange={setEmergencyContact}
+            label="Home Airport"
+            value={homeAirport}
+            onChange={setHomeAirport}
           />
-        </div>
-
-        <div className="mt-5">
-          <label className="mb-2 block font-bold text-slate-950">
-            Home Address
-          </label>
-
-          <textarea
-            value={homeAddress}
-            onChange={(event) => setHomeAddress(event.target.value)}
-            className="h-24 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none"
-          />
-        </div>
-
-        <div className="mt-5 grid gap-5 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block font-bold text-slate-950">
-              Certifications
-            </label>
-
-            <textarea
-              value={certifications}
-              onChange={(event) => setCertifications(event.target.value)}
-              placeholder="Separate certifications with commas"
-              className="h-28 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block font-bold text-slate-950">
-              Degrees
-            </label>
-
-            <textarea
-              value={degrees}
-              onChange={(event) => setDegrees(event.target.value)}
-              placeholder="Separate degrees with commas"
-              className="h-28 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none"
-            />
-          </div>
         </div>
 
         <div className="mt-8 flex justify-end gap-4">
@@ -211,13 +134,15 @@ function EditStaffModal({
   );
 }
 
-type FieldProps = {
+function Field({
+  label,
+  value,
+  onChange,
+}: {
   label: string;
   value: string;
   onChange: (value: string) => void;
-};
-
-function Field({ label, value, onChange }: FieldProps) {
+}) {
   return (
     <div>
       <label className="mb-2 block font-bold text-slate-950">{label}</label>

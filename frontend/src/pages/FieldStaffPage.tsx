@@ -24,18 +24,19 @@ function FieldStaffPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
 
-  useEffect(() => {
-    async function loadStaff() {
-      try {
-        const data = await getStaff();
-        setStaff(data);
-      } catch (error) {
-        console.error("Failed to load staff:", error);
-      } finally {
-        setIsLoading(false);
-      }
+  async function loadStaff() {
+    try {
+      setIsLoading(true);
+      const data = await getStaff();
+      setStaff(data);
+    } catch (error) {
+      console.error("Failed to load staff:", error);
+    } finally {
+      setIsLoading(false);
     }
+  }
 
+  useEffect(() => {
     loadStaff();
   }, []);
 
@@ -162,6 +163,7 @@ function FieldStaffPage() {
       <AddStaffModal
         isOpen={isAddStaffOpen}
         onClose={() => setIsAddStaffOpen(false)}
+        onStaffCreated={loadStaff}
       />
     </DashboardLayout>
   );

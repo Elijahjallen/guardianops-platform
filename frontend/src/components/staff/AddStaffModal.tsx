@@ -1,67 +1,67 @@
 import { useState } from "react";
-import {
-  useStaffStore,
-  type StaffMember,
-  type StaffStatus,
-} from "../../store/staffStore";
+import { createStaff } from "../../services/api";
 
 type AddStaffModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onStaffCreated?: () => void;
 };
 
-function AddStaffModal({ isOpen, onClose }: AddStaffModalProps) {
-  const addStaff = useStaffStore((state) => state.addStaff);
-
+function AddStaffModal({ isOpen, onClose, onStaffCreated }: AddStaffModalProps) {
+  const [employeeId, setEmployeeId] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
-  const [status, setStatus] = useState<StaffStatus>("Available");
-  const [location, setLocation] = useState("");
+  const [status, setStatus] = useState("Available");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [driversLicense, setDriversLicense] = useState("");
-  const [passport, setPassport] = useState("");
   const [homeAirport, setHomeAirport] = useState("");
-  const [certifications, setCertifications] = useState("");
-  const [degrees, setDegrees] = useState("");
-  const [dateOfHire, setDateOfHire] = useState("");
-  const [homeAddress, setHomeAddress] = useState("");
-  const [emergencyContact, setEmergencyContact] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   if (!isOpen) return null;
 
-  function handleAddStaff() {
-    const newStaff: StaffMember = {
-      id: `STF-${Math.floor(100 + Math.random() * 900)}`,
-      name,
-      role,
-      status,
-      activeCases: 0,
-      location,
-      phone,
-      email,
-      dateOfBirth,
-      driversLicense,
-      passport,
-      homeAirport,
-      certifications: certifications.split(",").map((x) => x.trim()).filter(Boolean),
-      degrees: degrees.split(",").map((x) => x.trim()).filter(Boolean),
-      dateOfHire,
-      homeAddress,
-      emergencyContact,
-    };
+  async function handleAddStaff() {
+    setErrorMessage("");
 
-    addStaff(newStaff);
-    onClose();
+    try {
+      await createStaff({
+        employeeId,
+        name,
+        role,
+        status,
+        phone,
+        email,
+        homeAirport,
+      });
+
+      setEmployeeId("");
+      setName("");
+      setRole("");
+      setStatus("Available");
+      setPhone("");
+      setEmail("");
+      setHomeAirport("");
+
+      onStaffCreated?.();
+      onClose();
+    } catch (error) {
+      console.error("Failed to create staff:", error);
+      setErrorMessage("Failed to create staff. Check backend server.");
+    }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4">
-      <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl">
+      <div className="w-full max-w-3xl rounded-3xl bg-white p-8 shadow-2xl">
         <h2 className="text-3xl font-bold text-slate-950">Add Staff Member</h2>
 
+        {errorMessage && (
+          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
         <div className="mt-6 grid gap-5 md:grid-cols-2">
+          <Field label="Employee ID" value={employeeId} onChange={setEmployeeId} placeholder="EMP-003" />
           <Field label="Full Name" value={name} onChange={setName} />
           <Field label="Role" value={role} onChange={setRole} />
 
@@ -69,7 +69,7 @@ function AddStaffModal({ isOpen, onClose }: AddStaffModalProps) {
             <label className="mb-2 block font-bold text-slate-950">Status</label>
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value as StaffStatus)}
+              onChange={(event) => setStatus(event.target.value)}
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
             >
               <option>Available</option>
@@ -79,29 +79,9 @@ function AddStaffModal({ isOpen, onClose }: AddStaffModalProps) {
             </select>
           </div>
 
-          <Field label="Current Location" value={location} onChange={setLocation} />
-          <Field label="Date of Birth" value={dateOfBirth} onChange={setDateOfBirth} />
-          <Field label="Date of Hire" value={dateOfHire} onChange={setDateOfHire} />
-          <Field label="Driver's License" value={driversLicense} onChange={setDriversLicense} />
-          <Field label="Passport" value={passport} onChange={setPassport} />
-          <Field label="Home Airport" value={homeAirport} onChange={setHomeAirport} />
-          <Field label="Contact Number" value={phone} onChange={setPhone} />
+          <Field label="Phone" value={phone} onChange={setPhone} />
           <Field label="Email" value={email} onChange={setEmail} />
-          <Field label="Emergency Contact" value={emergencyContact} onChange={setEmergencyContact} />
-        </div>
-
-        <div className="mt-5">
-          <label className="mb-2 block font-bold text-slate-950">Home Address</label>
-          <textarea
-            value={homeAddress}
-            onChange={(e) => setHomeAddress(e.target.value)}
-            className="h-24 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none"
-          />
-        </div>
-
-        <div className="mt-5 grid gap-5 md:grid-cols-2">
-          <TextArea label="Certifications" value={certifications} onChange={setCertifications} />
-          <TextArea label="Degrees" value={degrees} onChange={setDegrees} />
+          <Field label="Home Airport" value={homeAirport} onChange={setHomeAirport} placeholder="BOI" />
         </div>
 
         <div className="mt-8 flex justify-end gap-4">
@@ -128,39 +108,21 @@ function Field({
   label,
   value,
   onChange,
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
 }) {
   return (
     <div>
       <label className="mb-2 block font-bold text-slate-950">{label}</label>
       <input
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
-      />
-    </div>
-  );
-}
-
-function TextArea({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div>
-      <label className="mb-2 block font-bold text-slate-950">{label}</label>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-28 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none"
       />
     </div>
   );

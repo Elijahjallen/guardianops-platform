@@ -65,3 +65,81 @@ export async function deleteCase(caseId: string) {
   const response = await api.delete(`/cases/${caseId}`);
   return response.data;
 }
+
+export async function getClientById(clientId: string) {
+  const response = await api.get(`/clients/${clientId}`);
+  return response.data;
+}
+
+export async function updateClient(
+  clientId: string,
+  clientData: {
+    clientCode: string;
+    name: string;
+    type: string;
+    contact: string;
+    phone: string;
+    email: string;
+    location: string;
+  }
+) {
+  const response = await api.put(`/clients/${clientId}`, clientData);
+  return response.data;
+}
+
+export async function deleteClient(clientId: string) {
+  const response = await api.delete(`/clients/${clientId}`);
+  return response.data;
+}
+
+export async function createClient(clientData: {
+  clientCode: string;
+  name: string;
+  type: string;
+  contact: string;
+  phone: string;
+  email: string;
+  location: string;
+}) {
+  const response = await api.post("/clients", clientData);
+  return response.data;
+}
+
+export async function createStaff(staffData: {
+  employeeId: string;
+  name: string;
+  role: string;
+  status: string;
+  phone: string;
+  email: string;
+  homeAirport: string;
+}) {
+  const response = await api.post("/staff", staffData);
+  return response.data;
+}
+
+export async function getStaffById(staffId: string) {
+  const response = await api.get(`/staff/${staffId}`);
+  return response.data;
+}
+
+export async function updateStaff(
+  staffId: string,
+  staffData: {
+    employeeId: string;
+    name: string;
+    role: string;
+    status: string;
+    phone: string;
+    email: string;
+    homeAirport: string;
+  }
+) {
+  const response = await api.put(`/staff/${staffId}`, staffData);
+  return response.data;
+}
+
+export async function deleteStaff(staffId: string) {
+  const response = await api.delete(`/staff/${staffId}`);
+  return response.data;
+}
