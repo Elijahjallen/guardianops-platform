@@ -1,25 +1,74 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import EditCaseModal from "../components/cases/EditCaseModal";
-import { useCaseStore } from "../store/caseStore";
-import { useNotificationStore } from "../store/notificationStore";
+import { deleteCase, getCaseById } from "../services/api";
+
+type ApiCase = {
+  id: string;
+  caseNumber: string;
+  clientName: string;
+  status: string;
+  destination: string;
+  pickupDate: string;
+  staffName?: string | null;
+  createdAt: string;
+};
 
 function CaseDetailsPage() {
   const navigate = useNavigate();
   const { caseId } = useParams();
 
-  const caseItem = useCaseStore((state) =>
-    state.cases.find((item) => item.id === caseId)
-  );
-
-  const deleteCase = useCaseStore((state) => state.deleteCase);
-  const addNotification = useNotificationStore(
-    (state) => state.addNotification
-  );
-
+  const [caseItem, setCaseItem] = useState<ApiCase | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditOpen, setIsEditOpen] = useState(false);
+
+  async function loadCase() {
+    if (!caseId) return;
+
+    try {
+      setIsLoading(true);
+      const data = await getCaseById(caseId);
+      setCaseItem(data);
+    } catch (error) {
+      console.error("Failed to load case:", error);
+      setCaseItem(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadCase();
+  }, [caseId]);
+
+  async function handleDeleteCase() {
+    if (!caseItem) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${caseItem.caseNumber}?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteCase(caseItem.id);
+      navigate("/cases");
+    } catch (error) {
+      console.error("Failed to delete case:", error);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 font-semibold text-slate-500 shadow-sm">
+          Loading case from database...
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!caseItem) {
     return (
@@ -30,7 +79,7 @@ function CaseDetailsPage() {
           </h1>
 
           <p className="mt-2 text-slate-500">
-            The case you are looking for does not exist.
+            The case you are looking for does not exist in PostgreSQL.
           </p>
 
           <button
@@ -42,18 +91,6 @@ function CaseDetailsPage() {
         </div>
       </DashboardLayout>
     );
-  }
-
-  function handleDeleteCase() {
-    addNotification({
-      title: "Case deleted",
-      message: `Case ${caseItem.id} was deleted`,
-      caseId: caseItem.id,
-      type: "danger",
-    });
-
-    deleteCase(caseItem.id);
-    navigate("/cases");
   }
 
   return (
@@ -68,11 +105,11 @@ function CaseDetailsPage() {
           </button>
 
           <h1 className="mt-3 text-4xl font-bold text-slate-950">
-            Case {caseItem.id}
+            Case {caseItem.caseNumber}
           </h1>
 
           <p className="mt-2 text-slate-500">
-            View transport details, assignment status, notes, and activity.
+            Database-backed transport case details and activity.
           </p>
         </div>
 
@@ -104,21 +141,24 @@ function CaseDetailsPage() {
           </div>
 
           <div className="mt-6 grid gap-6 md:grid-cols-2">
-            <Detail label="Client" value={caseItem.client} />
+            <Detail label="Case Number" value={caseItem.caseNumber} />
+            <Detail label="Client" value={caseItem.clientName} />
             <Detail label="Status" value={caseItem.status} />
-            <Detail label="Assigned Staff" value={caseItem.staff} />
-            <Detail label="Priority" value={caseItem.priority} />
-            <Detail label="Pickup Date" value={caseItem.pickupDate} />
-            <Detail label="Pickup Location" value={caseItem.pickupLocation} />
+            <Detail
+              label="Assigned Staff"
+              value={caseItem.staffName || "Unassigned"}
+            />
             <Detail label="Destination" value={caseItem.destination} />
-            <Detail label="Last Update" value={caseItem.lastUpdate} />
+            <Detail label="Pickup Date" value={formatDate(caseItem.pickupDate)} />
+            <Detail label="Created" value={formatDate(caseItem.createdAt)} />
           </div>
 
           <div className="mt-8 rounded-2xl bg-slate-50 p-6">
-            <h3 className="font-bold text-slate-950">Case Notes</h3>
+            <h3 className="font-bold text-slate-950">Database Record</h3>
 
             <p className="mt-3 text-slate-600">
-              {caseItem.notes || "No notes have been added for this case."}
+              This case is being loaded from PostgreSQL through Express and
+              Prisma.
             </p>
           </div>
         </section>
@@ -129,10 +169,16 @@ function CaseDetailsPage() {
           </h2>
 
           <div className="mt-6 space-y-5">
-            <TimelineItem title="Case details viewed" time="Just now" />
-            <TimelineItem title={caseItem.lastUpdate} time="Recently" />
-            <TimelineItem title="Case assigned" time="3 hrs ago" />
-            <TimelineItem title="Case created" time="Earlier" />
+            <TimelineItem title="Case loaded from database" time="Just now" />
+            <TimelineItem title={`Status: ${caseItem.status}`} time="Current" />
+            <TimelineItem
+              title={`Assigned to ${caseItem.staffName || "Unassigned"}`}
+              time="Current"
+            />
+            <TimelineItem
+              title={`Created ${formatDate(caseItem.createdAt)}`}
+              time="Database"
+            />
           </div>
         </aside>
       </div>
@@ -141,6 +187,7 @@ function CaseDetailsPage() {
         isOpen={isEditOpen}
         caseItem={caseItem}
         onClose={() => setIsEditOpen(false)}
+        onCaseUpdated={loadCase}
       />
     </DashboardLayout>
   );
@@ -179,6 +226,7 @@ function StatusBadge({ status }: { status: string }) {
     Scheduled: "bg-purple-100 text-purple-700",
     Pending: "bg-orange-100 text-orange-700",
     "In Progress": "bg-sky-100 text-sky-700",
+    "In Transit": "bg-blue-100 text-blue-700",
     Completed: "bg-green-100 text-green-700",
     Cancelled: "bg-red-100 text-red-700",
   };
@@ -192,6 +240,20 @@ function StatusBadge({ status }: { status: string }) {
       {status}
     </span>
   );
+}
+
+function formatDate(dateValue: string) {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Not scheduled";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export default CaseDetailsPage;

@@ -1,85 +1,72 @@
 import { useEffect, useState } from "react";
-import {
-  useCaseStore,
-  type CaseStatus,
-  type TransportCase,
-} from "../../store/caseStore";
-import { useNotificationStore } from "../../store/notificationStore";
-import { useStaffStore } from "../../store/staffStore";
+import { updateCase } from "../../services/api";
+
+type ApiCase = {
+  id: string;
+  caseNumber: string;
+  clientName: string;
+  status: string;
+  destination: string;
+  pickupDate: string;
+  staffName?: string | null;
+};
 
 type EditCaseModalProps = {
   isOpen: boolean;
-  caseItem: TransportCase | null;
+  caseItem: ApiCase | null;
   onClose: () => void;
+  onCaseUpdated?: () => void;
 };
 
-function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
-  const updateCase = useCaseStore((state) => state.updateCase);
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const staffList = useStaffStore((state) => state.staff);
-
-  const [client, setClient] = useState("");
-  const [status, setStatus] = useState<CaseStatus>("Pending");
-  const [staff, setStaff] = useState("");
-  const [pickupLocation, setPickupLocation] = useState("");
+function EditCaseModal({
+  isOpen,
+  caseItem,
+  onClose,
+  onCaseUpdated,
+}: EditCaseModalProps) {
+  const [caseNumber, setCaseNumber] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [assignedStaff, setAssignedStaff] = useState("");
   const [destination, setDestination] = useState("");
   const [pickupDate, setPickupDate] = useState("");
-  const [priority, setPriority] = useState("");
-  const [notes, setNotes] = useState("");
+  const [status, setStatus] = useState("Scheduled");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (caseItem) {
-      setClient(caseItem.client);
-      setStatus(caseItem.status);
-      setStaff(caseItem.staff);
-      setPickupLocation(caseItem.pickupLocation);
+      setCaseNumber(caseItem.caseNumber);
+      setClientName(caseItem.clientName);
+      setAssignedStaff(caseItem.staffName || "");
       setDestination(caseItem.destination);
-      setPickupDate(caseItem.pickupDate);
-      setPriority(caseItem.priority);
-      setNotes(caseItem.notes);
+      setPickupDate(formatDateForInput(caseItem.pickupDate));
+      setStatus(caseItem.status);
     }
   }, [caseItem]);
 
   if (!isOpen || !caseItem) return null;
 
-  function handleSaveChanges() {
-    updateCase(caseItem.id, {
-      client,
-      status,
-      staff,
-      pickupLocation,
-      destination,
-      pickupDate,
-      priority,
-      notes,
-    });
+  async function handleSaveChanges() {
+    setErrorMessage("");
 
-    addNotification({
-      title: "Case updated",
-      message: `Case ${caseItem.id} was updated`,
-      caseId: caseItem.id,
-      type: "info",
-    });
-
-    if (caseItem.staff !== staff) {
-      addNotification({
-        title: "Staff assignment changed",
-        message: `Case ${caseItem.id} assigned to ${staff || "Unassigned"}`,
-        caseId: caseItem.id,
-        type: "info",
+    try {
+      await updateCase(caseItem.id, {
+        caseNumber,
+        clientName,
+        status,
+        destination,
+        pickupDate,
+        staffName: assignedStaff,
       });
-    }
 
-    if (caseItem.status !== status) {
-      addNotification({
-        title: "Case status changed",
-        message: `Case ${caseItem.id} changed from ${caseItem.status} to ${status}`,
-        caseId: caseItem.id,
-        type: status === "Completed" ? "success" : "warning",
-      });
-    }
+      if (onCaseUpdated) {
+        onCaseUpdated();
+      }
 
-    onClose();
+      onClose();
+    } catch (error) {
+      console.error("Failed to update case:", error);
+      setErrorMessage("Failed to update case. Check backend server.");
+    }
   }
 
   return (
@@ -89,7 +76,7 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
           <div>
             <h2 className="text-3xl font-bold text-slate-950">Edit Case</h2>
             <p className="mt-1 text-slate-500">
-              Update case details for {caseItem.id}.
+              Update this case directly in PostgreSQL.
             </p>
           </div>
 
@@ -101,84 +88,43 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
           </button>
         </div>
 
+        {errorMessage && (
+          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Client Name" value={client} onChange={setClient} />
-
-          <div>
-            <label className="mb-2 block font-bold text-slate-950">
-              Status
-            </label>
-            <select
-              value={status}
-              onChange={(event) => setStatus(event.target.value as CaseStatus)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
-            >
-              <option>En Route</option>
-              <option>Scheduled</option>
-              <option>Pending</option>
-              <option>In Progress</option>
-              <option>Completed</option>
-              <option>Cancelled</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="mb-2 block font-bold text-slate-950">
-              Assigned Staff
-            </label>
-            <select
-              value={staff}
-              onChange={(event) => setStaff(event.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
-            >
-              <option value="">Select Staff Member</option>
-              {staffList.map((member) => (
-                <option key={member.id} value={member.name}>
-                  {member.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
+          <Field label="Case Number" value={caseNumber} onChange={setCaseNumber} />
+          <Field label="Client Name" value={clientName} onChange={setClientName} />
           <Field
-            label="Pickup Location"
-            value={pickupLocation}
-            onChange={setPickupLocation}
+            label="Assigned Staff"
+            value={assignedStaff}
+            onChange={setAssignedStaff}
           />
-          <Field
-            label="Destination"
-            value={destination}
-            onChange={setDestination}
-          />
+          <Field label="Destination" value={destination} onChange={setDestination} />
           <Field
             label="Pickup Date"
+            type="date"
             value={pickupDate}
             onChange={setPickupDate}
           />
 
           <div>
-            <label className="mb-2 block font-bold text-slate-950">
-              Priority
-            </label>
+            <label className="mb-2 block font-bold text-slate-950">Status</label>
             <select
-              value={priority}
-              onChange={(event) => setPriority(event.target.value)}
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
             >
-              <option>Normal</option>
-              <option>High</option>
-              <option>Urgent</option>
+              <option>Scheduled</option>
+              <option>Pending</option>
+              <option>In Progress</option>
+              <option>In Transit</option>
+              <option>Completed</option>
+              <option>Cancelled</option>
             </select>
           </div>
-        </div>
-
-        <div className="mt-5">
-          <label className="mb-2 block font-bold text-slate-950">Notes</label>
-          <textarea
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-            className="h-32 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none"
-          />
         </div>
 
         <div className="mt-8 flex justify-end gap-4">
@@ -201,23 +147,42 @@ function EditCaseModal({ isOpen, caseItem, onClose }: EditCaseModalProps) {
   );
 }
 
-type FieldProps = {
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+}: {
   label: string;
   value: string;
   onChange: (value: string) => void;
-};
-
-function Field({ label, value, onChange }: FieldProps) {
+  placeholder?: string;
+  type?: string;
+}) {
   return (
     <div>
       <label className="mb-2 block font-bold text-slate-950">{label}</label>
+
       <input
+        type={type}
         value={value}
+        placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
       />
     </div>
   );
+}
+
+function formatDateForInput(dateValue: string) {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toISOString().split("T")[0];
 }
 
 export default EditCaseModal;
