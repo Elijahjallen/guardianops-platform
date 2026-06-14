@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import HeroPanel from "../components/HeroPanel";
-import { useAuthStore } from "../store/authStore";
+import { login as loginUser } from "../services/api";
 
 import googleSignInButton from "../assets/images/google-signin-button.png";
 import customerIcon from "../assets/icons/customer-icon.svg";
@@ -12,7 +12,6 @@ import lockIcon from "../assets/icons/lock-icon.svg";
 
 function LoginPage() {
   const navigate = useNavigate();
-  const login = useAuthStore((state) => state.login);
 
   const [selectedRole, setSelectedRole] = useState<"parent" | "employee">(
     "parent"
@@ -22,7 +21,7 @@ function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  function handleSignIn() {
+  async function handleSignIn() {
     setErrorMessage("");
 
     if (!email.trim()) {
@@ -35,14 +34,35 @@ function LoginPage() {
       return;
     }
 
-    console.log({
-      selectedRole,
-      email,
-      rememberMe,
-    });
+    try {
+      const data = await loginUser(email, password);
 
-    login();
-    navigate("/dashboard");
+      const userRole = data.user.role;
+
+      const employeeRoles = ["Admin", "Employee", "Case Manager", "Field Staff"];
+      const parentRoles = ["Parent", "Client"];
+
+      const isEmployeeLogin =
+        selectedRole === "employee" && employeeRoles.includes(userRole);
+
+      const isParentLogin =
+        selectedRole === "parent" && parentRoles.includes(userRole);
+
+      if (!isEmployeeLogin && !isParentLogin) {
+        setErrorMessage(
+          `This account is registered as ${userRole}. Please select the correct login type.`
+        );
+        return;
+      }
+
+      localStorage.setItem("guardianops-token", data.token);
+      localStorage.setItem("guardianops-user", JSON.stringify(data.user));
+
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Login failed:", error);
+      setErrorMessage("Invalid email or password.");
+    }
   }
 
   return (

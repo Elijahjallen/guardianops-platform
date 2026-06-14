@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useAuthStore } from "../../store/authStore";
+import AddUserModal from "../auth/AddUserModal";
+import ProfileModal from "../auth/ProfileModal";
 
 import MagGlassIcon from "../../assets/icons/Mag-glass-icon.svg";
 import NotificationIcon from "../../assets/icons/Notification-icon.svg";
@@ -9,18 +11,27 @@ import DropDownArrow from "../../assets/icons/Drop-down-arrow.svg";
 
 function TopNavigation() {
   const navigate = useNavigate();
-  const logout = useAuthStore((state) => state.logout);
+
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+
+  const storedUser = localStorage.getItem("guardianops-user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
 
   function handleLogout() {
-    logout();
-    navigate("/login");
+    localStorage.removeItem("guardianops-token");
+    localStorage.removeItem("guardianops-user");
+    sessionStorage.clear();
+
+    navigate("/", { replace: true });
   }
 
   return (
     <header className="flex h-24 items-center justify-between border-b border-slate-200 bg-white px-8">
       <div>
         <h1 className="text-3xl font-bold text-slate-950">
-          Welcome back, John!
+          Welcome back, {user?.name || "User"}!
         </h1>
 
         <p className="mt-1 text-sm text-slate-500">
@@ -46,24 +57,78 @@ function TopNavigation() {
 
         <div className="h-8 w-px bg-slate-200" />
 
-        <div className="flex items-center gap-3">
-          <img src={ProfileIcon} alt="Profile" className="h-11 w-11" />
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsProfileMenuOpen((current) => !current)}
+            className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-slate-50"
+          >
+            <img src={ProfileIcon} alt="Profile" className="h-11 w-11" />
 
-          <div className="text-left">
-            <p className="font-semibold text-slate-900">John Smith</p>
-            <p className="text-xs text-slate-500">Transport Coordinator</p>
-          </div>
+            <div className="text-left">
+              <p className="font-semibold text-slate-900">
+                {user?.name || "User"}
+              </p>
+              <p className="text-xs text-slate-500">
+                {user?.role || "Authenticated User"}
+              </p>
+            </div>
 
-          <img src={DropDownArrow} alt="Menu" className="h-4 w-4" />
+            <img
+              src={DropDownArrow}
+              alt="Menu"
+              className={`h-4 w-4 transition ${
+                isProfileMenuOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {isProfileMenuOpen && (
+            <div className="absolute right-0 top-16 z-50 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+              <button
+                onClick={() => {
+                  setIsProfileOpen(true);
+                  setIsProfileMenuOpen(false);
+                }}
+                className="w-full rounded-xl px-4 py-3 text-left font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Profile
+              </button>
+
+              {user?.role === "Admin" && (
+                <button
+                  onClick={() => {
+                    setIsAddUserOpen(true);
+                    setIsProfileMenuOpen(false);
+                  }}
+                  className="w-full rounded-xl px-4 py-3 text-left font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Add New User
+                </button>
+              )}
+
+              <div className="my-2 h-px bg-slate-200" />
+
+              <button
+                onClick={handleLogout}
+                className="w-full rounded-xl px-4 py-3 text-left font-semibold text-red-600 hover:bg-red-50"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
-
-        <button
-          onClick={handleLogout}
-          className="rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
-        >
-          Logout
-        </button>
       </div>
+
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+      />
+
+      <AddUserModal
+        isOpen={isAddUserOpen}
+        onClose={() => setIsAddUserOpen(false)}
+      />
     </header>
   );
 }
