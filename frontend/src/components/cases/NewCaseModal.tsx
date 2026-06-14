@@ -1,63 +1,73 @@
 import { useState } from "react";
-import { useCaseStore, type TransportCase } from "../../store/caseStore";
-import { useNotificationStore } from "../../store/notificationStore";
-import { useStaffStore } from "../../store/staffStore";
+import { createCase } from "../../services/api";
 
 type NewCaseModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onCaseCreated?: () => void;
 };
 
-function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
-  const addCase = useCaseStore((state) => state.addCase);
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const staff = useStaffStore((state) => state.staff);
-
+function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
+  const [caseNumber, setCaseNumber] = useState("");
   const [clientName, setClientName] = useState("");
   const [assignedStaff, setAssignedStaff] = useState("");
-  const [pickupLocation, setPickupLocation] = useState("");
   const [destination, setDestination] = useState("");
   const [pickupDate, setPickupDate] = useState("");
-  const [priority, setPriority] = useState("Normal");
-  const [notes, setNotes] = useState("");
+  const [status, setStatus] = useState("Scheduled");
+  const [errorMessage, setErrorMessage] = useState("");
 
   if (!isOpen) return null;
 
-  const handleCreateCase = () => {
-    const caseId = `2026-${Math.floor(1000 + Math.random() * 9000)}`;
+  async function handleCreateCase() {
+    setErrorMessage("");
 
-    const newCase: TransportCase = {
-      id: caseId,
-      client: clientName,
-      status: "Pending",
-      staff: assignedStaff,
-      pickupLocation,
-      destination,
-      pickupDate,
-      priority,
-      notes,
-      lastUpdate: "Just now",
-    };
+    if (!caseNumber.trim()) {
+      setErrorMessage("Case number is required.");
+      return;
+    }
 
-    addCase(newCase);
+    if (!clientName.trim()) {
+      setErrorMessage("Client name is required.");
+      return;
+    }
 
-    addNotification({
-      title: "New case created",
-      message: `Case ${caseId} created for ${clientName || "new client"}`,
-      caseId,
-      type: "success",
-    });
+    if (!destination.trim()) {
+      setErrorMessage("Destination is required.");
+      return;
+    }
 
-    setClientName("");
-    setAssignedStaff("");
-    setPickupLocation("");
-    setDestination("");
-    setPickupDate("");
-    setPriority("Normal");
-    setNotes("");
+    if (!pickupDate.trim()) {
+      setErrorMessage("Pickup date is required.");
+      return;
+    }
 
-    onClose();
-  };
+    try {
+      await createCase({
+        caseNumber,
+        clientName,
+        status,
+        destination,
+        pickupDate,
+        staffName: assignedStaff,
+      });
+
+      setCaseNumber("");
+      setClientName("");
+      setAssignedStaff("");
+      setDestination("");
+      setPickupDate("");
+      setStatus("Scheduled");
+
+      if (onCaseCreated) {
+        onCaseCreated();
+      }
+
+      onClose();
+    } catch (error) {
+      console.error("Failed to create case:", error);
+      setErrorMessage("Failed to create case. Check backend server.");
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4">
@@ -67,8 +77,9 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
             <h2 className="text-3xl font-bold text-slate-950">
               Create New Case
             </h2>
+
             <p className="mt-1 text-slate-500">
-              Enter transport case details and assignment information.
+              Save a new transport case directly into PostgreSQL.
             </p>
           </div>
 
@@ -80,33 +91,41 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
           </button>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Client Name" value={clientName} onChange={setClientName} />
-
-          <div>
-            <label className="mb-2 block font-bold text-slate-950">
-              Assigned Staff
-            </label>
-            <select
-              value={assignedStaff}
-              onChange={(event) => setAssignedStaff(event.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
-            >
-              <option value="">Select Staff Member</option>
-              {staff.map((member) => (
-                <option key={member.id} value={member.name}>
-                  {member.name}
-                </option>
-              ))}
-            </select>
+        {errorMessage && (
+          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700">
+            {errorMessage}
           </div>
+        )}
+
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field
+            label="Case Number"
+            value={caseNumber}
+            onChange={setCaseNumber}
+            placeholder="CASE-1003"
+          />
 
           <Field
-            label="Pickup Location"
-            value={pickupLocation}
-            onChange={setPickupLocation}
+            label="Client Name"
+            value={clientName}
+            onChange={setClientName}
+            placeholder="Orange County Schools"
           />
-          <Field label="Destination" value={destination} onChange={setDestination} />
+
+          <Field
+            label="Assigned Staff"
+            value={assignedStaff}
+            onChange={setAssignedStaff}
+            placeholder="Sarah Johnson"
+          />
+
+          <Field
+            label="Destination"
+            value={destination}
+            onChange={setDestination}
+            placeholder="Boise, ID"
+          />
+
           <Field
             label="Pickup Date"
             type="date"
@@ -116,28 +135,22 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
 
           <div>
             <label className="mb-2 block font-bold text-slate-950">
-              Priority
+              Status
             </label>
+
             <select
-              value={priority}
-              onChange={(event) => setPriority(event.target.value)}
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
             >
-              <option>Normal</option>
-              <option>High</option>
-              <option>Urgent</option>
+              <option>Scheduled</option>
+              <option>Pending</option>
+              <option>In Progress</option>
+              <option>In Transit</option>
+              <option>Completed</option>
+              <option>Cancelled</option>
             </select>
           </div>
-        </div>
-
-        <div className="mt-5">
-          <label className="mb-2 block font-bold text-slate-950">Notes</label>
-          <textarea
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-            placeholder="Add case notes..."
-            className="h-32 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none"
-          />
         </div>
 
         <div className="mt-8 flex justify-end gap-4">
@@ -160,20 +173,27 @@ function NewCaseModal({ isOpen, onClose }: NewCaseModalProps) {
   );
 }
 
-type FieldProps = {
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+}: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
   type?: string;
-};
-
-function Field({ label, value, onChange, type = "text" }: FieldProps) {
+}) {
   return (
     <div>
       <label className="mb-2 block font-bold text-slate-950">{label}</label>
+
       <input
         type={type}
         value={value}
+        placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
       />

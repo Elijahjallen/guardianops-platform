@@ -25,18 +25,19 @@ function CasesPage() {
   const [searchText, setSearchText] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
 
-  useEffect(() => {
-    async function loadCases() {
-      try {
-        const data = await getCases();
-        setCases(data);
-      } catch (error) {
-        console.error("Failed to load cases:", error);
-      } finally {
-        setIsLoading(false);
-      }
+  async function loadCases() {
+    try {
+      setIsLoading(true);
+      const data = await getCases();
+      setCases(data);
+    } catch (error) {
+      console.error("Failed to load cases:", error);
+    } finally {
+      setIsLoading(false);
     }
+  }
 
+  useEffect(() => {
     loadCases();
   }, []);
 
@@ -185,6 +186,7 @@ function CasesPage() {
       <NewCaseModal
         isOpen={isNewCaseOpen}
         onClose={() => setIsNewCaseOpen(false)}
+        onCaseCreated={loadCases}
       />
     </DashboardLayout>
   );

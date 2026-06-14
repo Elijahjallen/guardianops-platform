@@ -28,3 +28,15 @@ export async function getNotifications() {
   const response = await api.get("/notifications");
   return response.data;
 }
+
+export async function createCase(caseData: {
+  caseNumber: string;
+  clientName: string;
+  status: string;
+  destination: string;
+  pickupDate: string;
+  staffName?: string;
+}) {
+  const response = await api.post("/cases", caseData);
+  return response.data;
+}
