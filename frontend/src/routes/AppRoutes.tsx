@@ -11,6 +11,7 @@ import StaffDetailsPage from "../pages/StaffDetailsPage";
 import ClientDirectoryPage from "../pages/ClientDirectoryPage";
 import ProtectedRoute from "./ProtectedRoute";
 import ClientDetailsPage from "../pages/ClientDetailsPage";
+import UserManagementPage from "../pages/UserManagementPage";
 
 function AppRoutes() {
   return (
@@ -35,6 +36,15 @@ function AppRoutes() {
               </ProtectedRoute>
             }
         />
+
+        <Route
+  path="/users"
+  element={
+    <ProtectedRoute>
+      <UserManagementPage />
+    </ProtectedRoute>
+  }
+/>  
 
         <Route
           path="/dashboard"

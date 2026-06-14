@@ -6,6 +6,7 @@ import staffRoutes from "./routes/staffRoutes";
 import clientRoutes from "./routes/clientRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
 import authRoutes from "./routes/authRoutes";
+import userRoutes from "./routes/userRoutes";
 
 dotenv.config();
 
@@ -24,6 +25,8 @@ app.use("/api/clients", clientRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 app.use("/api/auth", authRoutes);
+
+app.use("/api/users", userRoutes);
 
 app.get("/", (_req, res) => {
   res.send("GuardianOps API Running");

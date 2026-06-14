@@ -41,7 +41,11 @@ function TopNavigation() {
 
       <div className="flex items-center gap-6">
         <div className="flex w-[420px] items-center rounded-xl border border-slate-200 bg-white px-4 py-3">
-          <img src={MagGlassIcon} alt="Search" className="mr-3 h-5 w-5" />
+          <img
+            src={MagGlassIcon}
+            alt="Search"
+            className="mr-3 h-5 w-5"
+          />
 
           <input
             type="text"
@@ -51,7 +55,12 @@ function TopNavigation() {
         </div>
 
         <button className="relative">
-          <img src={NotificationIcon} alt="Notifications" className="h-6 w-6" />
+          <img
+            src={NotificationIcon}
+            alt="Notifications"
+            className="h-6 w-6"
+          />
+
           <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-blue-600" />
         </button>
 
@@ -63,12 +72,17 @@ function TopNavigation() {
             onClick={() => setIsProfileMenuOpen((current) => !current)}
             className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-slate-50"
           >
-            <img src={ProfileIcon} alt="Profile" className="h-11 w-11" />
+            <img
+              src={ProfileIcon}
+              alt="Profile"
+              className="h-11 w-11"
+            />
 
             <div className="text-left">
               <p className="font-semibold text-slate-900">
                 {user?.name || "User"}
               </p>
+
               <p className="text-xs text-slate-500">
                 {user?.role || "Authenticated User"}
               </p>
@@ -84,7 +98,7 @@ function TopNavigation() {
           </button>
 
           {isProfileMenuOpen && (
-            <div className="absolute right-0 top-16 z-50 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="absolute right-0 top-16 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
               <button
                 onClick={() => {
                   setIsProfileOpen(true);
@@ -96,15 +110,27 @@ function TopNavigation() {
               </button>
 
               {user?.role === "Admin" && (
-                <button
-                  onClick={() => {
-                    setIsAddUserOpen(true);
-                    setIsProfileMenuOpen(false);
-                  }}
-                  className="w-full rounded-xl px-4 py-3 text-left font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  Add New User
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      navigate("/users");
+                      setIsProfileMenuOpen(false);
+                    }}
+                    className="w-full rounded-xl px-4 py-3 text-left font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    User Management
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIsAddUserOpen(true);
+                      setIsProfileMenuOpen(false);
+                    }}
+                    className="w-full rounded-xl px-4 py-3 text-left font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Add New User
+                  </button>
+                </>
               )}
 
               <div className="my-2 h-px bg-slate-200" />

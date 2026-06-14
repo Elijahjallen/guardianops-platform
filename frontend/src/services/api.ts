@@ -152,3 +152,62 @@ export async function login(email: string, password: string) {
 
   return response.data;
 }
+
+export async function getUsers() {
+  const token = localStorage.getItem("guardianops-token");
+
+  const response = await api.get("/users", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}
+
+export async function updateUser(
+  userId: string,
+  userData: {
+    name: string;
+    email: string;
+    role: string;
+  }
+) {
+  const token = localStorage.getItem("guardianops-token");
+
+  const response = await api.put(`/users/${userId}`, userData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}
+
+export async function resetUserPassword(userId: string, password: string) {
+  const token = localStorage.getItem("guardianops-token");
+
+  const response = await api.put(
+    `/users/${userId}/reset-password`,
+    { password },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function deleteUser(userId: string) {
+  const token = localStorage.getItem("guardianops-token");
+
+  const response = await api.delete(`/users/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}
