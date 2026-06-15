@@ -37,12 +37,13 @@ function EditUserModal({
   if (!isOpen || !user) return null;
 
   async function handleSave() {
+    const selectedUser = user;
+    if (!selectedUser) return;
+
     setMessage("");
 
     try {
-      if (!user) return;
-
-await updateUser(user.id, {
+      await updateUser(selectedUser.id, {
         name,
         email,
         role,
