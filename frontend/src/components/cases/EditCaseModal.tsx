@@ -49,7 +49,9 @@ function EditCaseModal({
     setErrorMessage("");
 
     try {
-      await updateCase(caseItem.id, {
+      if (!caseItem) return;
+
+await updateCase(caseItem.id, {
         caseNumber,
         clientName,
         status,

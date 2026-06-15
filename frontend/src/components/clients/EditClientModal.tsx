@@ -50,7 +50,9 @@ function EditClientModal({
     setErrorMessage("");
 
     try {
-      await updateClient(client.id, {
+      if (!client) return;
+
+await updateClient(client.id, {
         clientCode: client.clientCode,
         name,
         type,

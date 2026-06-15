@@ -24,7 +24,9 @@ function ResetPasswordModal({ isOpen, user, onClose }: ResetPasswordModalProps) 
     setMessage("");
 
     try {
-      await resetUserPassword(user.id, password);
+      if (!user) return;
+
+await resetUserPassword(user.id, password);
       setMessage("Password reset successfully.");
     } catch (error) {
       console.error("Failed to reset password:", error);

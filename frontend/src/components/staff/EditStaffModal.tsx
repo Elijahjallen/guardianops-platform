@@ -52,7 +52,9 @@ function EditStaffModal({
     setErrorMessage("");
 
     try {
-      await updateStaff(staffMember.id, {
+      if (!staffMember) return;
+
+await updateStaff(staffMember.id, {
         employeeId,
         name,
         role,

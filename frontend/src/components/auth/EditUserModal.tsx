@@ -40,7 +40,9 @@ function EditUserModal({
     setMessage("");
 
     try {
-      await updateUser(user.id, {
+      if (!user) return;
+
+await updateUser(user.id, {
         name,
         email,
         role,
