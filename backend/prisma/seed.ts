@@ -1,9 +1,31 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log("Seeding database...");
+
+  const adminPassword = await bcrypt.hash("Password123!", 10);
+
+  await prisma.user.upsert({
+    where: {
+      email: "elijahjallen@gmail.com",
+    },
+    update: {
+      name: "Eli Allen",
+      role: "Admin",
+      password: adminPassword,
+      clientName: null,
+    },
+    create: {
+      name: "Eli Allen",
+      email: "elijahjallen@gmail.com",
+      password: adminPassword,
+      role: "Admin",
+      clientName: null,
+    },
+  });
 
   await prisma.client.createMany({
     data: [
@@ -92,6 +114,9 @@ async function main() {
   });
 
   console.log("Database seeded successfully.");
+  console.log("Admin login:");
+  console.log("Email: elijahjallen@gmail.com");
+  console.log("Password: Password123!");
 }
 
 main()
