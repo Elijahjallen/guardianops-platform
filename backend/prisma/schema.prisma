@@ -19,27 +19,27 @@ model Case {
 }
 
 model Staff {
-  id             String   @id @default(cuid())
-  employeeId     String   @unique
-  name           String
-  role           String
-  status         String
-  phone          String
-  email          String
-  homeAirport    String
-  createdAt      DateTime @default(now())
+  id          String   @id @default(cuid())
+  employeeId  String   @unique
+  name        String
+  role        String
+  status      String
+  phone       String
+  email       String
+  homeAirport String
+  createdAt   DateTime @default(now())
 }
 
 model Client {
-  id          String   @id @default(cuid())
-  clientCode  String   @unique
-  name        String
-  type        String
-  contact     String
-  phone       String
-  email       String
-  location    String
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  clientCode String   @unique
+  name       String
+  type       String
+  contact    String
+  phone      String
+  email      String
+  location   String
+  createdAt  DateTime @default(now())
 }
 
 model Notification {
@@ -56,8 +56,8 @@ model User {
   email      String   @unique
   password   String
   role       String
-  clientName String?
   createdAt  DateTime @default(now())
+  clientName String?
 }
 
 model CaseActivity {
@@ -71,13 +71,13 @@ model CaseActivity {
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  caseId    String
-  senderId  String
+  id         String   @id @default(cuid())
+  caseId     String
+  senderId   String
   senderName String
   senderRole String
-  content   String
-  createdAt DateTime @default(now())
+  content    String
+  createdAt  DateTime @default(now())
 }
 
 model CaseDocument {
