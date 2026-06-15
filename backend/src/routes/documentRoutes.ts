@@ -31,8 +31,8 @@ router.get("/:caseId", requireAuth, async (req: AuthRequest, res) => {
   try {
     const documents = await prisma.caseDocument.findMany({
       where: {
-        caseId: req.params.caseId,
-      },
+  caseId: String(req.params.caseId),
+},
       orderBy: {
         createdAt: "desc",
       },

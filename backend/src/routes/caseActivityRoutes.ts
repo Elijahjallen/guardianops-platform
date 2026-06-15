@@ -10,8 +10,8 @@ router.get("/:caseId", requireAuth, async (req: AuthRequest, res) => {
   try {
     const activities = await prisma.caseActivity.findMany({
       where: {
-        caseId: req.params.caseId,
-      },
+  caseId: String(req.params.caseId),
+},
       orderBy: {
         createdAt: "desc",
       },

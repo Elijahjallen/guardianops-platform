@@ -9,9 +9,9 @@ const prisma = new PrismaClient();
 router.get("/:caseId", requireAuth, async (req: AuthRequest, res) => {
   try {
     const messages = await prisma.message.findMany({
-      where: {
-        caseId: req.params.caseId,
-      },
+where: {
+  caseId: String(req.params.caseId),
+},
       orderBy: {
         createdAt: "asc",
       },
