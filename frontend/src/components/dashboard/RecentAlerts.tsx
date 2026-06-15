@@ -1,103 +1,115 @@
-import { useNavigate } from "react-router-dom";
-import { useNotificationStore } from "../../store/notificationStore";
+import { useEffect, useState } from "react";
 
-import CasesIconBlue from "../../assets/icons/Cases-Icon-Blue.svg";
-import ExpensesReportIconGreen from "../../assets/icons/Expenses-Report-Icon-Green.svg";
-import DelayIcon from "../../assets/icons/Delay-Icon.svg";
-import QuoteApprovedIcon from "../../assets/icons/Quote-Approved-Icon.svg";
+import { getNotifications } from "../../services/api";
+
+type ApiNotification = {
+  id: string;
+  title: string;
+  message: string;
+  severity: string;
+  createdAt: string;
+};
 
 function RecentAlerts() {
-  const navigate = useNavigate();
-  const notifications = useNotificationStore((state) => state.notifications);
-  const recentNotifications = notifications.slice(0, 5);
+  const [alerts, setAlerts] = useState<ApiNotification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadAlerts() {
+      try {
+        const data = await getNotifications();
+        setAlerts(data.slice(0, 5));
+      } catch (error) {
+        console.error("Failed to load recent alerts:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadAlerts();
+  }, []);
 
   return (
-    <section className="rounded-xl border border-slate-300 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-300 px-6 py-5">
-        <h2 className="text-xl font-bold text-slate-950">Recent Alerts</h2>
-
-        <button
-          onClick={() => navigate("/notifications")}
-          className="text-sm font-medium text-slate-950 hover:text-blue-600"
-        >
-          View All
-        </button>
+    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-950">
+            Recent Alerts
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Latest database-backed notifications.
+          </p>
+        </div>
       </div>
 
-      <div className="px-6 py-4">
-        {recentNotifications.map((alert, index) => (
+      {isLoading && (
+        <div className="py-8 text-center font-semibold text-slate-500">
+          Loading alerts...
+        </div>
+      )}
+
+      {!isLoading && alerts.length === 0 && (
+        <div className="py-8 text-center font-semibold text-slate-500">
+          No recent alerts.
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {alerts.map((alert) => (
           <div
             key={alert.id}
-            className={`flex items-center gap-4 py-5 ${
-              index !== recentNotifications.length - 1
-                ? "border-b border-slate-200"
-                : ""
-            }`}
+            className="rounded-2xl border border-slate-100 bg-slate-50 p-4"
           >
-            <div
-              className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${getAlertBackground(
-                alert.type
-              )}`}
-            >
-              <img
-                src={getAlertIcon(alert.type)}
-                alt={alert.title}
-                className="h-7 w-7 object-contain"
-              />
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <h3 className="font-bold text-slate-950">{alert.title}</h3>
+
+              <SeverityBadge severity={alert.severity} />
             </div>
 
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-900">
-                {alert.title}
-              </p>
+            <p className="text-sm text-slate-600">{alert.message}</p>
 
-              <p className="mt-1 text-sm text-slate-600">{alert.message}</p>
-            </div>
-
-            <div className="flex w-[70px] shrink-0 flex-col items-end gap-3">
-              <span className="text-xs text-slate-500">{alert.timestamp}</span>
-
-              <span className="h-2 w-2 rounded-full bg-blue-600" />
-            </div>
+            <p className="mt-3 text-xs font-semibold text-slate-400">
+              {formatDate(alert.createdAt)}
+            </p>
           </div>
         ))}
-
-        {recentNotifications.length === 0 && (
-          <p className="py-6 text-center text-sm font-semibold text-slate-500">
-            No recent alerts.
-          </p>
-        )}
       </div>
     </section>
   );
 }
 
-function getAlertIcon(type: string) {
-  switch (type) {
-    case "success":
-      return QuoteApprovedIcon;
-    case "warning":
-      return DelayIcon;
-    case "danger":
-      return ExpensesReportIconGreen;
-    case "info":
-    default:
-      return CasesIconBlue;
-  }
+function SeverityBadge({ severity }: { severity: string }) {
+  const styles: Record<string, string> = {
+    High: "bg-red-100 text-red-700",
+    Medium: "bg-orange-100 text-orange-700",
+    Low: "bg-green-100 text-green-700",
+    Info: "bg-blue-100 text-blue-700",
+  };
+
+  return (
+    <span
+      className={`rounded-lg px-3 py-1 text-xs font-bold ${
+        styles[severity] || "bg-slate-100 text-slate-700"
+      }`}
+    >
+      {severity}
+    </span>
+  );
 }
 
-function getAlertBackground(type: string) {
-  switch (type) {
-    case "success":
-      return "bg-green-50";
-    case "warning":
-      return "bg-orange-50";
-    case "danger":
-      return "bg-red-50";
-    case "info":
-    default:
-      return "bg-blue-50";
+function formatDate(dateValue: string) {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown";
   }
+
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 export default RecentAlerts;

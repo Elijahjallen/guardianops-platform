@@ -15,27 +15,113 @@ import ClientDirectoryIcon from "../../assets/icons/Client-Directory-White.svg";
 import SettingsIcon from "../../assets/icons/Settings-Icon-White.svg";
 import SupportIcon from "../../assets/icons/Support-Icon-White.svg";
 
-const menuItems = [
-  { title: "Dashboard", icon: HomeIcon, path: "/dashboard" },
-  { title: "Cases", icon: CasesIcon, path: "/cases" },
-  { title: "Intake Forms", icon: IntakeIcon, path: "/intake-forms" },
-  { title: "Quotes", icon: QuotesIcon, path: "/quotes" },
-  { title: "Expenses", icon: ExpensesIcon, path: "/expenses" },
-  { title: "Scheduling", icon: SchedulingIcon, path: "/scheduling" },
-  { title: "Field Staff", icon: FieldStaffIcon, path: "/field-staff" },
+type MenuItem = {
+  title: string;
+  icon: string;
+  path: string;
+  badge?: string;
+  allowedRoles: string[];
+};
+
+const menuItems: MenuItem[] = [
+  {
+    title: "Dashboard",
+    icon: HomeIcon,
+    path: "/dashboard",
+    allowedRoles: ["Admin", "Employee", "Case Manager", "Field Staff", "Parent", "Client"],
+  },
+  {
+    title: "Cases",
+    icon: CasesIcon,
+    path: "/cases",
+    allowedRoles: ["Admin", "Employee", "Case Manager", "Field Staff"],
+  },
+  {
+    title: "Intake Forms",
+    icon: IntakeIcon,
+    path: "/intake-forms",
+    allowedRoles: ["Admin", "Employee", "Case Manager"],
+  },
+  {
+    title: "Quotes",
+    icon: QuotesIcon,
+    path: "/quotes",
+    allowedRoles: ["Admin", "Employee", "Case Manager"],
+  },
+  {
+    title: "Expenses",
+    icon: ExpensesIcon,
+    path: "/expenses",
+    allowedRoles: ["Admin", "Employee", "Case Manager"],
+  },
+  {
+    title: "Scheduling",
+    icon: SchedulingIcon,
+    path: "/scheduling",
+    allowedRoles: ["Admin", "Employee", "Case Manager", "Field Staff"],
+  },
+  {
+    title: "Field Staff",
+    icon: FieldStaffIcon,
+    path: "/field-staff",
+    allowedRoles: ["Admin", "Employee", "Case Manager"],
+  },
   {
     title: "Notifications",
     icon: NotificationsIcon,
     path: "/notifications",
     badge: "12",
+    allowedRoles: ["Admin", "Employee", "Case Manager", "Field Staff", "Parent", "Client"],
   },
-  { title: "Reports", icon: ReportsIcon, path: "/reports" },
-  { title: "Client Directory", icon: ClientDirectoryIcon, path: "/clients" },
-  { title: "Settings", icon: SettingsIcon, path: "/settings" },
-  { title: "Support", icon: SupportIcon, path: "/support" },
+  {
+    title: "Reports",
+    icon: ReportsIcon,
+    path: "/reports",
+    allowedRoles: ["Admin", "Case Manager", "Client"],
+  },
+  {
+    title: "Client Directory",
+    icon: ClientDirectoryIcon,
+    path: "/clients",
+    allowedRoles: ["Admin", "Case Manager", "Client"],
+  },
+  {
+    title: "Settings",
+    icon: SettingsIcon,
+    path: "/settings",
+    allowedRoles: ["Admin"],
+  },
+  {
+    title: "Support",
+    icon: SupportIcon,
+    path: "/support",
+    allowedRoles: ["Admin", "Employee", "Case Manager", "Field Staff", "Parent", "Client"],
+  },
 ];
 
 function Sidebar() {
+ const storedUser = localStorage.getItem("guardianops-user");
+
+let user: { name?: string; role?: string } | null = null;
+
+try {
+  user = storedUser ? JSON.parse(storedUser) : null;
+} catch {
+  user = null;
+}
+  const userRole = user?.role || "";
+
+  const visibleMenuItems = menuItems.filter((item) =>
+    item.allowedRoles.includes(userRole)
+  );
+
+  const initials =
+    user?.name
+      ?.split(" ")
+      .map((part: string) => part[0])
+      .join("")
+      .toUpperCase() || "U";
+
   return (
     <aside
       className="hidden min-h-screen w-[300px] flex-col text-white xl:flex"
@@ -47,7 +133,7 @@ function Sidebar() {
 
       <nav className="flex-1 px-5">
         <div className="space-y-3">
-          {menuItems.map((item) => (
+          {visibleMenuItems.map((item) => (
             <NavLink
               key={item.title}
               to={item.path}
@@ -86,16 +172,16 @@ function Sidebar() {
       <div className="px-8 py-7">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-200 text-lg font-semibold text-slate-900">
-            JS
+            {initials}
           </div>
 
           <div className="min-w-0">
             <p className="truncate text-lg font-semibold text-white">
-              John Smith
+              {user?.name || "User"}
             </p>
 
             <p className="truncate text-sm text-[#A6B4D0]">
-              Transport Coordinator
+              {user?.role || "Authenticated User"}
             </p>
           </div>
         </div>

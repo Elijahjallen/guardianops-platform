@@ -211,3 +211,37 @@ export async function deleteUser(userId: string) {
 
   return response.data;
 }
+
+export async function getDashboardStats() {
+  const response = await api.get("/dashboard");
+  return response.data;
+}
+
+export async function getCaseStatusCounts() {
+  const response = await api.get("/dashboard/case-status");
+  return response.data;
+}
+
+export async function getParentCases() {
+  const token = localStorage.getItem("guardianops-token");
+
+  const response = await api.get("/parent/cases", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}
+
+export async function getUsersForAdmin() {
+  const token = localStorage.getItem("guardianops-token");
+
+  const response = await api.get("/users", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}

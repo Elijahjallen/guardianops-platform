@@ -1,116 +1,90 @@
-import { useCaseStore, type CaseStatus } from "../../store/caseStore";
+import { useEffect, useState } from "react";
 
-const statusConfig: Record<CaseStatus, { label: string; color: string; hex: string }> = {
-  "En Route": {
-    label: "En Route",
-    color: "bg-blue-600",
-    hex: "#2563eb",
-  },
-  "In Progress": {
-    label: "In Progress",
-    color: "bg-blue-400",
-    hex: "#60a5fa",
-  },
-  Scheduled: {
-    label: "Scheduled",
-    color: "bg-purple-600",
-    hex: "#7c3aed",
-  },
-  Pending: {
-    label: "Pending",
-    color: "bg-orange-400",
-    hex: "#f59e0b",
-  },
-  Completed: {
-    label: "Completed",
-    color: "bg-red-500",
-    hex: "#ef4444",
-  },
-  Cancelled: {
-    label: "Cancelled",
-    color: "bg-slate-400",
-    hex: "#94a3b8",
-  },
+import { getCaseStatusCounts } from "../../services/api";
+
+type CaseStatusItem = {
+  status: string;
+  count: number;
 };
 
-const statusOrder: CaseStatus[] = [
-  "En Route",
-  "In Progress",
-  "Scheduled",
-  "Pending",
-  "Completed",
-  "Cancelled",
-];
-
 function CaseStatusOverview() {
-  const cases = useCaseStore((state) => state.cases);
-  const totalCases = cases.length || 1;
+  const [statusData, setStatusData] = useState<CaseStatusItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  let currentDegree = 0;
+  useEffect(() => {
+    async function loadCaseStatusCounts() {
+      try {
+        const data = await getCaseStatusCounts();
+        setStatusData(data);
+      } catch (error) {
+        console.error("Failed to load case status counts:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
 
-  const statusData = statusOrder.map((status) => {
-    const count = cases.filter((caseItem) => caseItem.status === status).length;
-    const percent = Math.round((count / totalCases) * 100);
-    const degrees = (percent / 100) * 360;
+    loadCaseStatusCounts();
+  }, []);
 
-    const segment = `${statusConfig[status].hex} ${currentDegree}deg ${
-      currentDegree + degrees
-    }deg`;
-
-    currentDegree += degrees;
-
-    return {
-      status,
-      count,
-      percent,
-      segment,
-    };
-  });
-
-  const gradient =
-    statusData
-      .filter((item) => item.count > 0)
-      .map((item) => item.segment)
-      .join(", ") || "#e5e7eb 0deg 360deg";
+  const totalCases = statusData.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-bold text-slate-950">
-        Case Status Overview
-      </h2>
+    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-950">
+            Case Status Overview
+          </h2>
 
-      <div className="mt-6 flex items-center gap-6">
-        <div
-          className="flex h-32 w-32 shrink-0 items-center justify-center rounded-full"
-          style={{
-            background: `conic-gradient(${gradient})`,
-          }}
-        >
-          <div className="h-16 w-16 rounded-full bg-white" />
+          <p className="mt-1 text-sm text-slate-500">
+            Live case status totals from PostgreSQL.
+          </p>
         </div>
 
-        <div className="min-w-0 flex-1 space-y-3">
-          {statusData
-            .filter((item) => item.count > 0)
-            .map((item) => (
-              <div
-                key={item.status}
-                className="grid grid-cols-[12px_minmax(90px,1fr)_64px] items-center gap-3"
-              >
-                <span
-                  className={`h-3 w-3 rounded ${statusConfig[item.status].color}`}
-                />
+        <span className="rounded-xl bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700">
+          {totalCases} Total
+        </span>
+      </div>
 
-                <span className="text-sm text-slate-700">
-                  {statusConfig[item.status].label}
+      {isLoading && (
+        <div className="py-8 text-center font-semibold text-slate-500">
+          Loading case status data...
+        </div>
+      )}
+
+      {!isLoading && statusData.length === 0 && (
+        <div className="py-8 text-center font-semibold text-slate-500">
+          No case status data available.
+        </div>
+      )}
+
+      <div className="space-y-5">
+        {statusData.map((item) => {
+          const percentage = totalCases
+            ? Math.round((item.count / totalCases) * 100)
+            : 0;
+
+          return (
+            <div key={item.status}>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="font-bold text-slate-700">
+                  {item.status}
                 </span>
 
-                <span className="text-right text-sm font-semibold text-slate-950">
-                  {item.count} ({item.percent}%)
+                <span className="text-sm font-bold text-slate-500">
+                  {item.count} cases · {percentage}%
                 </span>
               </div>
-            ))}
-        </div>
+
+              <div className="h-3 rounded-full bg-slate-100">
+                <div
+                  className="h-3 rounded-full bg-blue-600"
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );

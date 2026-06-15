@@ -12,8 +12,8 @@ const JWT_SECRET = process.env.JWT_SECRET || "guardianops-development-secret";
 
 router.post("/register", requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { name, password, role } = req.body;
-    const email = req.body.email.toLowerCase().trim();
+const { name, password, role, clientName } = req.body;
+const email = req.body.email.toLowerCase().trim();
 
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -27,20 +27,22 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
-      },
-    });
+const user = await prisma.user.create({
+  data: {
+    name,
+    email,
+    password: hashedPassword,
+    role,
+    clientName: clientName || null,
+  },
+});
 
     res.status(201).json({
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
+      clientName: user.clientName,
     });
   } catch (error) {
     console.error(error);

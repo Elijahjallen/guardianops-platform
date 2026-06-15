@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { getCases, getClients, getNotifications, getStaff } from "../../services/api";
+import { getDashboardStats } from "../../services/api";
 
 import CasesIcon from "../../assets/icons/Cases-Icon.svg";
 import PendingQuotesIcon from "../../assets/icons/Pending-Quotes-Icon.svg";
@@ -10,43 +10,25 @@ import OpenNotificationsIcon from "../../assets/icons/Open-Notifications-Icon.sv
 import UpArrowIcon from "../../assets/icons/Up-Arrow-Icon.svg";
 import DownArrowIcon from "../../assets/icons/Down-Arrow-Notifications.svg";
 
+type DashboardStats = {
+  totalCases: number;
+  totalClients: number;
+  totalStaff: number;
+  totalNotifications: number;
+  pendingCases: number;
+  completedCases: number;
+  activeStaff: number;
+  upcomingPickups: number;
+};
+
 function QuickStats() {
-  const [activeCases, setActiveCases] = useState(0);
-  const [pendingCases, setPendingCases] = useState(0);
-  const [activeStaff, setActiveStaff] = useState(0);
-  const [openNotifications, setOpenNotifications] = useState(0);
+  const [statsData, setStatsData] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
     async function loadDashboardStats() {
       try {
-        const [cases, staff, clients, notifications] = await Promise.all([
-          getCases(),
-          getStaff(),
-          getClients(),
-          getNotifications(),
-        ]);
-
-        console.log("Dashboard API data:", {
-          cases,
-          staff,
-          clients,
-          notifications,
-        });
-
-        setActiveCases(cases.length);
-
-        setPendingCases(
-          cases.filter((item: any) => item.status === "Pending").length
-        );
-
-        setActiveStaff(
-          staff.filter(
-            (member: any) =>
-              member.status === "Available" || member.status === "En Route"
-          ).length
-        );
-
-        setOpenNotifications(notifications.length);
+        const data = await getDashboardStats();
+        setStatsData(data);
       } catch (error) {
         console.error("Failed to load dashboard stats:", error);
       }
@@ -58,32 +40,32 @@ function QuickStats() {
   const stats = [
     {
       title: "Active Cases",
-      value: activeCases.toString(),
-      change: "2",
+      value: statsData?.totalCases ?? 0,
+      change: statsData?.completedCases ?? 0,
       direction: "up",
       icon: CasesIcon,
       iconBackground: "bg-blue-50",
     },
     {
       title: "Pending Cases",
-      value: pendingCases.toString(),
-      change: "5",
+      value: statsData?.pendingCases ?? 0,
+      change: statsData?.upcomingPickups ?? 0,
       direction: "up",
       icon: PendingQuotesIcon,
       iconBackground: "bg-green-50",
     },
     {
       title: "Field Staff Active",
-      value: activeStaff.toString(),
-      change: "5",
+      value: statsData?.activeStaff ?? 0,
+      change: statsData?.totalStaff ?? 0,
       direction: "up",
       icon: FieldStaffIcon,
       iconBackground: "bg-purple-50",
     },
     {
       title: "Open Notifications",
-      value: openNotifications.toString(),
-      change: "5",
+      value: statsData?.totalNotifications ?? 0,
+      change: statsData?.totalClients ?? 0,
       direction: "down",
       icon: OpenNotificationsIcon,
       iconBackground: "bg-orange-50",
@@ -131,7 +113,12 @@ function QuickStats() {
                 {stat.change}
               </span>
 
-              <span className="text-slate-950">from yesterday</span>
+              <span className="text-slate-950">
+                {stat.title === "Active Cases" && "completed"}
+                {stat.title === "Pending Cases" && "upcoming pickups"}
+                {stat.title === "Field Staff Active" && "total staff"}
+                {stat.title === "Open Notifications" && "total clients"}
+              </span>
             </div>
           </div>
         </div>

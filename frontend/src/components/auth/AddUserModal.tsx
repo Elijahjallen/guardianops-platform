@@ -1,9 +1,15 @@
-import { useState } from "react";
-import { api } from "../../services/api";
+import { useEffect, useState } from "react";
+import { api, getClients } from "../../services/api";
 
 type AddUserModalProps = {
   isOpen: boolean;
   onClose: () => void;
+};
+
+type ClientOption = {
+  id: string;
+  clientCode: string;
+  name: string;
 };
 
 function AddUserModal({ isOpen, onClose }: AddUserModalProps) {
@@ -11,13 +17,54 @@ function AddUserModal({ isOpen, onClose }: AddUserModalProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("Employee");
   const [password, setPassword] = useState("Password123!");
+  const [clientName, setClientName] = useState("");
+  const [clients, setClients] = useState<ClientOption[]>([]);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const needsClientLink = role === "Parent" || role === "Client";
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    async function loadClients() {
+      try {
+        const data = await getClients();
+        setClients(data);
+      } catch (error) {
+        console.error("Failed to load clients:", error);
+        setMessage("Failed to load clients.");
+      }
+    }
+
+    loadClients();
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   async function handleCreateUser() {
     setMessage("");
+
+    if (!name.trim()) {
+      setMessage("Name is required.");
+      return;
+    }
+
+    if (!email.trim()) {
+      setMessage("Email is required.");
+      return;
+    }
+
+    if (!password.trim()) {
+      setMessage("Password is required.");
+      return;
+    }
+
+    if (needsClientLink && !clientName.trim()) {
+      setMessage("Parent/Client users must be linked to a client.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -35,6 +82,7 @@ function AddUserModal({ isOpen, onClose }: AddUserModalProps) {
           email,
           password,
           role,
+          clientName: needsClientLink ? clientName : null,
         },
         {
           headers: {
@@ -49,12 +97,12 @@ function AddUserModal({ isOpen, onClose }: AddUserModalProps) {
       setEmail("");
       setRole("Employee");
       setPassword("Password123!");
+      setClientName("");
     } catch (error: any) {
       console.error("Failed to create user:", error);
 
       const apiMessage =
-        error?.response?.data?.message ||
-        "Failed to create user.";
+        error?.response?.data?.message || "Failed to create user.";
 
       setMessage(apiMessage);
     } finally {
@@ -85,17 +133,9 @@ function AddUserModal({ isOpen, onClose }: AddUserModalProps) {
         )}
 
         <div className="space-y-5">
-          <Field
-            label="Full Name"
-            value={name}
-            onChange={setName}
-          />
+          <Field label="Full Name" value={name} onChange={setName} />
 
-          <Field
-            label="Email Address"
-            value={email}
-            onChange={setEmail}
-          />
+          <Field label="Email Address" value={email} onChange={setEmail} />
 
           <Field
             label="Temporary Password"
@@ -110,7 +150,10 @@ function AddUserModal({ isOpen, onClose }: AddUserModalProps) {
 
             <select
               value={role}
-              onChange={(event) => setRole(event.target.value)}
+              onChange={(event) => {
+                setRole(event.target.value);
+                setClientName("");
+              }}
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
             >
               <option>Admin</option>
@@ -121,6 +164,32 @@ function AddUserModal({ isOpen, onClose }: AddUserModalProps) {
               <option>Client</option>
             </select>
           </div>
+
+          {needsClientLink && (
+            <div>
+              <label className="mb-2 block font-bold text-slate-950">
+                Linked Client
+              </label>
+
+              <select
+                value={clientName}
+                onChange={(event) => setClientName(event.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+              >
+                <option value="">Select client</option>
+
+                {clients.map((client) => (
+                  <option key={client.id} value={client.name}>
+                    {client.name} ({client.clientCode})
+                  </option>
+                ))}
+              </select>
+
+              <p className="mt-2 text-sm font-semibold text-slate-500">
+                Parent and Client users will only see cases for this client.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="mt-8 flex justify-end gap-4">

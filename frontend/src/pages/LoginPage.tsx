@@ -36,7 +36,6 @@ function LoginPage() {
 
     try {
       const data = await loginUser(email, password);
-
       const userRole = data.user.role;
 
       const employeeRoles = ["Admin", "Employee", "Case Manager", "Field Staff"];
@@ -58,7 +57,11 @@ function LoginPage() {
       localStorage.setItem("guardianops-token", data.token);
       localStorage.setItem("guardianops-user", JSON.stringify(data.user));
 
-      navigate("/dashboard");
+      if (userRole === "Parent" || userRole === "Client") {
+        navigate("/parent-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error) {
       console.error("Login failed:", error);
       setErrorMessage("Invalid email or password.");
@@ -176,6 +179,11 @@ function LoginPage() {
 
               <button
                 type="button"
+                onClick={() =>
+                  setErrorMessage(
+                    "Google sign-in will be available in a future release."
+                  )
+                }
                 className="flex h-16 w-full items-center justify-center rounded-xl border border-slate-300 bg-white"
               >
                 <img
@@ -252,4 +260,4 @@ function RoleButton({
   );
 }
 
-export default LoginPage;
+export default LoginPage; 

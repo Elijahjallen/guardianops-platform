@@ -1,10 +1,30 @@
-import { useState } from "react";
-import { createCase } from "../../services/api";
+import { useEffect, useState } from "react";
+import { createCase, getClients, getStaff, getUsersForAdmin } from "../../services/api";
 
 type NewCaseModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onCaseCreated?: () => void;
+};
+
+type ClientOption = {
+  id: string;
+  clientCode: string;
+  name: string;
+};
+
+type StaffOption = {
+  id: string;
+  name: string;
+  status: string;
+};
+
+type UserOption = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  clientName?: string | null;
 };
 
 function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
@@ -14,9 +34,45 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
   const [destination, setDestination] = useState("");
   const [pickupDate, setPickupDate] = useState("");
   const [status, setStatus] = useState("Scheduled");
+  const [clients, setClients] = useState<ClientOption[]>([]);
+  const [staff, setStaff] = useState<StaffOption[]>([]);
+  const [users, setUsers] = useState<UserOption[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    async function loadFormData() {
+      try {
+        const [clientData, staffData, userData] = await Promise.all([
+          getClients(),
+          getStaff(),
+          getUsersForAdmin(),
+        ]);
+
+        setClients(clientData);
+        setStaff(staffData);
+        setUsers(userData);
+      } catch (error) {
+        console.error("Failed to load new case form data:", error);
+        setErrorMessage("Failed to load clients, parents, or staff.");
+      }
+    }
+
+    loadFormData();
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const availableStaff = staff.filter(
+    (member) => member.status === "Available" || member.status === "En Route"
+  );
+
+  const linkedParents = users.filter(
+    (user) =>
+      (user.role === "Parent" || user.role === "Client") &&
+      user.clientName === clientName
+  );
 
   async function handleCreateCase() {
     setErrorMessage("");
@@ -58,10 +114,7 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
       setPickupDate("");
       setStatus("Scheduled");
 
-      if (onCaseCreated) {
-        onCaseCreated();
-      }
-
+      onCaseCreated?.();
       onClose();
     } catch (error) {
       console.error("Failed to create case:", error);
@@ -71,7 +124,7 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4">
-      <div className="w-full max-w-3xl rounded-3xl bg-white p-8 shadow-2xl">
+      <div className="w-full max-w-4xl rounded-3xl bg-white p-8 shadow-2xl">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold text-slate-950">
@@ -79,7 +132,7 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
             </h2>
 
             <p className="mt-1 text-slate-500">
-              Save a new transport case directly into PostgreSQL.
+              Select a client, verify linked parent/client access, and assign available staff.
             </p>
           </div>
 
@@ -105,19 +158,76 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
             placeholder="CASE-1003"
           />
 
-          <Field
-            label="Client Name"
-            value={clientName}
-            onChange={setClientName}
-            placeholder="Orange County Schools"
-          />
+          <div>
+            <label className="mb-2 block font-bold text-slate-950">
+              Client Name
+            </label>
 
-          <Field
-            label="Assigned Staff"
-            value={assignedStaff}
-            onChange={setAssignedStaff}
-            placeholder="Sarah Johnson"
-          />
+            <select
+              value={clientName}
+              onChange={(event) => setClientName(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+            >
+              <option value="">Select client</option>
+              {clients.map((client) => (
+                <option key={client.id} value={client.name}>
+                  {client.name} ({client.clientCode})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <p className="font-bold text-slate-950">Linked Parent / Client Access</p>
+
+            {!clientName && (
+              <p className="mt-2 text-sm font-semibold text-slate-500">
+                Select a client to view linked parent or client portal users.
+              </p>
+            )}
+
+            {clientName && linkedParents.length === 0 && (
+              <p className="mt-2 text-sm font-semibold text-red-600">
+                No Parent or Client users are currently linked to {clientName}.
+              </p>
+            )}
+
+            {linkedParents.length > 0 && (
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {linkedParents.map((parent) => (
+                  <div
+                    key={parent.id}
+                    className="rounded-xl border border-slate-200 bg-white p-4"
+                  >
+                    <p className="font-bold text-slate-950">{parent.name}</p>
+                    <p className="text-sm text-slate-500">{parent.email}</p>
+                    <p className="mt-1 text-xs font-bold uppercase text-blue-600">
+                      {parent.role}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-2 block font-bold text-slate-950">
+              Assigned Staff
+            </label>
+
+            <select
+              value={assignedStaff}
+              onChange={(event) => setAssignedStaff(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+            >
+              <option value="">Unassigned</option>
+              {availableStaff.map((member) => (
+                <option key={member.id} value={member.name}>
+                  {member.name} — {member.status}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <Field
             label="Destination"
