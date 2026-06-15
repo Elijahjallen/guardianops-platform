@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
-import { getParentCases } from "../services/api";
+import { getCaseActivity, getParentCases } from "../services/api";
+import MessagesPanel from "../components/messages/MessagesPanel";
+import CaseDocumentsPanel from "../components/documents/CaseDocumentsPanel";
 
 type ParentCase = {
   id: string;
@@ -13,23 +15,39 @@ type ParentCase = {
   staffName?: string | null;
 };
 
+type CaseActivity = {
+  id: string;
+  caseId: string;
+  caseNumber: string;
+  title: string;
+  description: string;
+  createdBy: string;
+  createdAt: string;
+};
+
 function ParentDashboardPage() {
   const [cases, setCases] = useState<ParentCase[]>([]);
+  const [activities, setActivities] = useState<CaseActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function loadParentCases() {
+    async function loadParentPortal() {
       try {
-        const data = await getParentCases();
-        setCases(data);
+        const caseData = await getParentCases();
+        setCases(caseData);
+
+        if (caseData.length > 0) {
+          const activityData = await getCaseActivity(caseData[0].id);
+          setActivities(activityData);
+        }
       } catch (error) {
-        console.error("Failed to load parent cases:", error);
+        console.error("Failed to load parent portal:", error);
       } finally {
         setIsLoading(false);
       }
     }
 
-    loadParentCases();
+    loadParentPortal();
   }, []);
 
   const primaryCase = cases[0];
@@ -37,12 +55,10 @@ function ParentDashboardPage() {
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <h1 className="text-4xl font-bold text-slate-950">
-          Parent Portal
-        </h1>
+        <h1 className="text-4xl font-bold text-slate-950">Parent Portal</h1>
 
         <p className="mt-2 text-slate-500">
-          View transport case status, assigned escort, and recent updates.
+          View transport case status, assigned escort, and real-time case updates.
         </p>
       </div>
 
@@ -98,24 +114,30 @@ function ParentDashboardPage() {
 
             <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
               <h2 className="text-2xl font-bold text-slate-950">
-                Case Updates
+                Live Case Updates
               </h2>
 
+              <p className="mt-1 text-sm text-slate-500">
+                Updates are generated from GuardianOps case activity.
+              </p>
+
               <div className="mt-6 space-y-5">
-                <TimelineItem
-                  title="Case loaded from GuardianOps"
-                  detail="Your case information is connected to the transport operations database."
-                />
+                {activities.map((activity) => (
+                  <TimelineItem
+                    key={activity.id}
+                    title={activity.title}
+                    detail={activity.description}
+                    footer={`${activity.createdBy} · ${formatDateTime(
+                      activity.createdAt
+                    )}`}
+                  />
+                ))}
 
-                <TimelineItem
-                  title={`Current Status: ${primaryCase.status}`}
-                  detail="Status updates will appear here as the transport progresses."
-                />
-
-                <TimelineItem
-                  title={`Escort: ${primaryCase.staffName || "Pending Assignment"}`}
-                  detail="Assigned staff information will be updated by operations."
-                />
+                {activities.length === 0 && (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center font-semibold text-slate-500">
+                    No case updates have been posted yet.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -170,22 +192,15 @@ function ParentDashboardPage() {
                 GuardianOps Operations
               </p>
               <p className="mt-2 text-slate-600">(208) 555-0188</p>
-              <p className="mt-1 text-slate-600">
-                support@guardianops.com
-              </p>
+              <p className="mt-1 text-slate-600">support@guardianops.com</p>
             </InfoCard>
 
-            <InfoCard title="Messages">
-              <p className="text-slate-600">
-                Secure messaging will be available in a future release.
-              </p>
-            </InfoCard>
+            <MessagesPanel caseId={primaryCase.id} />
 
-            <InfoCard title="Documents">
-              <p className="text-slate-600">
-                Travel documents, authorizations, and reports will appear here.
-              </p>
-            </InfoCard>
+            <CaseDocumentsPanel
+                caseId={primaryCase.id}
+                caseNumber={primaryCase.caseNumber}
+            />
           </aside>
         </div>
       )}
@@ -215,9 +230,7 @@ function Detail({ label, value }: { label: string; value: string }) {
         {label}
       </p>
 
-      <p className="mt-2 text-lg font-semibold text-slate-950">
-        {value}
-      </p>
+      <p className="mt-2 text-lg font-semibold text-slate-950">{value}</p>
     </div>
   );
 }
@@ -225,17 +238,20 @@ function Detail({ label, value }: { label: string; value: string }) {
 function TimelineItem({
   title,
   detail,
+  footer,
 }: {
   title: string;
   detail: string;
+  footer: string;
 }) {
   return (
     <div className="flex gap-4">
-      <span className="mt-1 h-3 w-3 rounded-full bg-blue-600" />
+      <span className="mt-1 h-3 w-3 shrink-0 rounded-full bg-blue-600" />
 
       <div>
         <p className="font-bold text-slate-950">{title}</p>
         <p className="mt-1 text-sm text-slate-500">{detail}</p>
+        <p className="mt-2 text-xs font-semibold text-slate-400">{footer}</p>
       </div>
     </div>
   );
@@ -274,6 +290,21 @@ function formatDate(dateValue: string) {
     month: "short",
     day: "numeric",
     year: "numeric",
+  });
+}
+
+function formatDateTime(dateValue: string) {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown";
+  }
+
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 

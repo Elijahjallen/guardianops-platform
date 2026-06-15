@@ -38,6 +38,16 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+async function createNotification(title: string, message: string, severity = "Info") {
+  await prisma.notification.create({
+    data: {
+      title,
+      message,
+      severity,
+    },
+  });
+}
+
 router.post("/", async (req, res) => {
   try {
     const newCase = await prisma.case.create({
@@ -51,6 +61,40 @@ router.post("/", async (req, res) => {
       },
     });
 
+    await prisma.caseActivity.create({
+      data: {
+        caseId: newCase.id,
+        caseNumber: newCase.caseNumber,
+        title: "Case Created",
+        description: `Case ${newCase.caseNumber} was created for ${newCase.clientName}.`,
+        createdBy: "System",
+      },
+    });
+
+    await createNotification(
+      "Case Created",
+      `Case ${newCase.caseNumber} was created for ${newCase.clientName}.`,
+      "Info"
+    );
+
+    if (newCase.staffName) {
+      await prisma.caseActivity.create({
+        data: {
+          caseId: newCase.id,
+          caseNumber: newCase.caseNumber,
+          title: "Escort Assigned",
+          description: `${newCase.staffName} was assigned to case ${newCase.caseNumber}.`,
+          createdBy: "System",
+        },
+      });
+
+      await createNotification(
+        "Escort Assigned",
+        `${newCase.staffName} was assigned to case ${newCase.caseNumber}.`,
+        "Medium"
+      );
+    }
+
     res.status(201).json(newCase);
   } catch (error) {
     console.error(error);
@@ -60,6 +104,16 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   try {
+    const existingCase = await prisma.case.findUnique({
+      where: {
+        id: req.params.id,
+      },
+    });
+
+    if (!existingCase) {
+      return res.status(404).json({ error: "Case not found" });
+    }
+
     const updatedCase = await prisma.case.update({
       where: {
         id: req.params.id,
@@ -76,6 +130,46 @@ router.put("/:id", async (req, res) => {
       },
     });
 
+    if (existingCase.status !== updatedCase.status) {
+      await prisma.caseActivity.create({
+        data: {
+          caseId: updatedCase.id,
+          caseNumber: updatedCase.caseNumber,
+          title: "Status Updated",
+          description: `Status changed from ${existingCase.status} to ${updatedCase.status}.`,
+          createdBy: "System",
+        },
+      });
+
+      await createNotification(
+        "Status Updated",
+        `Case ${updatedCase.caseNumber} status changed from ${existingCase.status} to ${updatedCase.status}.`,
+        updatedCase.status === "Cancelled" ? "High" : "Info"
+      );
+    }
+
+    if (existingCase.staffName !== updatedCase.staffName) {
+      await prisma.caseActivity.create({
+        data: {
+          caseId: updatedCase.id,
+          caseNumber: updatedCase.caseNumber,
+          title: "Escort Assignment Updated",
+          description: `Escort changed from ${
+            existingCase.staffName || "Unassigned"
+          } to ${updatedCase.staffName || "Unassigned"}.`,
+          createdBy: "System",
+        },
+      });
+
+      await createNotification(
+        "Escort Assignment Updated",
+        `Case ${updatedCase.caseNumber} escort changed from ${
+          existingCase.staffName || "Unassigned"
+        } to ${updatedCase.staffName || "Unassigned"}.`,
+        "Medium"
+      );
+    }
+
     res.json(updatedCase);
   } catch (error) {
     console.error(error);
@@ -85,6 +179,12 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
+    await prisma.caseActivity.deleteMany({
+      where: {
+        caseId: req.params.id,
+      },
+    });
+
     await prisma.case.delete({
       where: {
         id: req.params.id,

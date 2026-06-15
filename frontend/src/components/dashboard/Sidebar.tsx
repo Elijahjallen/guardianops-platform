@@ -115,6 +115,20 @@ try {
     item.allowedRoles.includes(userRole)
   );
 
+  const adjustedMenuItems = visibleMenuItems.map((item) => {
+  if (
+    item.title === "Dashboard" &&
+    (userRole === "Parent" || userRole === "Client")
+  ) {
+    return {
+      ...item,
+      path: "/parent-dashboard",
+    };
+  }
+
+  return item;
+});
+
   const initials =
     user?.name
       ?.split(" ")
@@ -133,7 +147,7 @@ try {
 
       <nav className="flex-1 px-5">
         <div className="space-y-3">
-          {visibleMenuItems.map((item) => (
+          {adjustedMenuItems.map((item) => (
             <NavLink
               key={item.title}
               to={item.path}

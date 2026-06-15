@@ -245,3 +245,85 @@ export async function getUsersForAdmin() {
 
   return response.data;
 }
+
+export async function getCaseActivity(caseId: string) {
+  const token = localStorage.getItem("guardianops-token");
+
+  const response = await api.get(`/case-activity/${caseId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}
+
+export async function createCaseActivity(activityData: {
+  caseId: string;
+  caseNumber: string;
+  title: string;
+  description: string;
+  createdBy?: string;
+}) {
+  const token = localStorage.getItem("guardianops-token");
+
+  const response = await api.post("/case-activity", activityData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}
+
+export async function getMessages(caseId: string) {
+  const token = localStorage.getItem("guardianops-token");
+
+  const response = await api.get(`/messages/${caseId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}
+
+export async function sendMessage(messageData: {
+  caseId: string;
+  content: string;
+}) {
+  const token = localStorage.getItem("guardianops-token");
+
+  const response = await api.post("/messages", messageData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}
+
+export async function getCaseDocuments(caseId: string) {
+  const token = localStorage.getItem("guardianops-token");
+
+  const response = await api.get(`/documents/${caseId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}
+
+export async function uploadCaseDocument(formData: FormData) {
+  const token = localStorage.getItem("guardianops-token");
+
+  const response = await api.post("/documents/upload", formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+}

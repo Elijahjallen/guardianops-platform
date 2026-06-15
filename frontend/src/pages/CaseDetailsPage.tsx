@@ -3,7 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
 import EditCaseModal from "../components/cases/EditCaseModal";
+import CaseActivityTimeline from "../components/cases/CaseActivityTimeline";
 import { deleteCase, getCaseById } from "../services/api";
+import MessagesPanel from "../components/messages/MessagesPanel";
+import CaseDocumentsPanel from "../components/documents/CaseDocumentsPanel";
 
 type ApiCase = {
   id: string;
@@ -74,9 +77,7 @@ function CaseDetailsPage() {
     return (
       <DashboardLayout>
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h1 className="text-3xl font-bold text-slate-950">
-            Case Not Found
-          </h1>
+          <h1 className="text-3xl font-bold text-slate-950">Case Not Found</h1>
 
           <p className="mt-2 text-slate-500">
             The case you are looking for does not exist in PostgreSQL.
@@ -109,7 +110,7 @@ function CaseDetailsPage() {
           </h1>
 
           <p className="mt-2 text-slate-500">
-            Database-backed transport case details and activity.
+            Database-backed transport case details and activity timeline.
           </p>
         </div>
 
@@ -131,41 +132,57 @@ function CaseDetailsPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-        <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-slate-950">
-              Transport Information
-            </h2>
+        <section className="space-y-6">
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-slate-950">
+                Transport Information
+              </h2>
 
-            <StatusBadge status={caseItem.status} />
+              <StatusBadge status={caseItem.status} />
+            </div>
+
+            <div className="mt-6 grid gap-6 md:grid-cols-2">
+              <Detail label="Case Number" value={caseItem.caseNumber} />
+              <Detail label="Client" value={caseItem.clientName} />
+              <Detail label="Status" value={caseItem.status} />
+              <Detail
+                label="Assigned Staff"
+                value={caseItem.staffName || "Unassigned"}
+              />
+              <Detail label="Destination" value={caseItem.destination} />
+              <Detail
+                label="Pickup Date"
+                value={formatDate(caseItem.pickupDate)}
+              />
+              <Detail label="Created" value={formatDate(caseItem.createdAt)} />
+            </div>
+
+            <div className="mt-8 rounded-2xl bg-slate-50 p-6">
+              <h3 className="font-bold text-slate-950">Database Record</h3>
+
+              <p className="mt-3 text-slate-600">
+                This case is being loaded from PostgreSQL through Express and
+                Prisma.
+              </p>
+            </div>
           </div>
 
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
-            <Detail label="Case Number" value={caseItem.caseNumber} />
-            <Detail label="Client" value={caseItem.clientName} />
-            <Detail label="Status" value={caseItem.status} />
-            <Detail
-              label="Assigned Staff"
-              value={caseItem.staffName || "Unassigned"}
-            />
-            <Detail label="Destination" value={caseItem.destination} />
-            <Detail label="Pickup Date" value={formatDate(caseItem.pickupDate)} />
-            <Detail label="Created" value={formatDate(caseItem.createdAt)} />
-          </div>
+          <CaseActivityTimeline
+            caseId={caseItem.id}
+            caseNumber={caseItem.caseNumber}
+          />
 
-          <div className="mt-8 rounded-2xl bg-slate-50 p-6">
-            <h3 className="font-bold text-slate-950">Database Record</h3>
-
-            <p className="mt-3 text-slate-600">
-              This case is being loaded from PostgreSQL through Express and
-              Prisma.
-            </p>
-          </div>
+          <MessagesPanel caseId={caseItem.id} />
+          <CaseDocumentsPanel
+            caseId={caseItem.id}
+            caseNumber={caseItem.caseNumber}
+          />
         </section>
 
         <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-bold text-slate-950">
-            Activity Timeline
+            Activity Summary
           </h2>
 
           <div className="mt-6 space-y-5">
