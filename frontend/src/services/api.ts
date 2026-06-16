@@ -328,3 +328,13 @@ export async function uploadCaseDocument(formData: FormData) {
 
   return response.data;
 }
+
+export async function submitIntakeForm(intakeData: any) {
+  const response = await api.post("/intake", intakeData);
+  return response.data;
+}
+
+  export async function getYouthProfile(caseId: string) {
+  const response = await api.get(`/intake/youth-profile/${caseId}`);
+  return response.data;
+}

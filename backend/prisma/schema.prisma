@@ -91,3 +91,46 @@ model CaseDocument {
   uploadedBy   String
   createdAt    DateTime @default(now())
 }
+
+model YouthProfile {
+  id                      String   @id @default(cuid())
+  caseId                  String   @unique
+  caseNumber              String
+
+  firstName               String
+  middleName              String?
+  lastName                String
+  preferredName           String?
+  dateOfBirth             DateTime
+  gender                  String
+  identifiesNonBinary     Boolean  @default(false)
+  identifiesTransgender   Boolean  @default(false)
+  pronouns                String?
+
+  autismSpectrumDisorder  Boolean  @default(false)
+  autismSpectrumLevel     String?
+
+  height                  String?
+  weight                  String?
+  hairColor               String?
+  eyeColor                String?
+  marks                   String?
+
+  likes                   String?
+  dislikes                String?
+  participatingBehavior   String?
+  impulsiveBehavior       String?
+
+  siblingsInHome          String?
+  familyDynamics          String?
+  bedroomLayout           String?
+
+  sportsOrHobbies         String?
+  athleticLevel           String?
+
+  custody                 String?
+  biologicalOrAdopted     String?
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}

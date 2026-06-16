@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 
 import LoginPage from "../pages/LoginPage";
+
 import DashboardPage from "../pages/DashboardPage";
 import CasesPage from "../pages/CasesPage";
 import CaseDetailsPage from "../pages/CaseDetailsPage";
@@ -13,6 +14,7 @@ import ReportsPage from "../pages/ReportsPage";
 import SchedulingPage from "../pages/SchedulingPage";
 import UserManagementPage from "../pages/UserManagementPage";
 import ParentDashboardPage from "../pages/ParentDashboardPage";
+import IntakeFormPage from "../pages/IntakeFormPage";
 
 import ProtectedRoute from "./ProtectedRoute";
 import RoleProtectedRoute from "./RoleProtectedRoute";
@@ -22,6 +24,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<LoginPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/intake" element={<IntakeFormPage />} />
 
       <Route
         path="/dashboard"

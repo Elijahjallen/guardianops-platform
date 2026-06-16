@@ -7,6 +7,7 @@ import CaseActivityTimeline from "../components/cases/CaseActivityTimeline";
 import { deleteCase, getCaseById } from "../services/api";
 import MessagesPanel from "../components/messages/MessagesPanel";
 import CaseDocumentsPanel from "../components/documents/CaseDocumentsPanel";
+import YouthProfilePanel from "../components/cases/YouthProfilePanel";
 
 type ApiCase = {
   id: string;
@@ -168,6 +169,8 @@ function CaseDetailsPage() {
             </div>
           </div>
 
+          <YouthProfilePanel caseId={caseItem.id} />
+          
           <CaseActivityTimeline
             caseId={caseItem.id}
             caseNumber={caseItem.caseNumber}
