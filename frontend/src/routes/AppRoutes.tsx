@@ -39,7 +39,7 @@ function AppRoutes() {
         path="/cases"
         element={
           <RoleProtectedRoute
-            allowedRoles={["Admin", "Employee", "Case Manager", "Field Staff"]}
+            allowedRoles={["Admin", "Office Manager", "Case Manager", "Field Staff"]}
           >
             <CasesPage />
           </RoleProtectedRoute>
@@ -50,7 +50,7 @@ function AppRoutes() {
         path="/cases/:caseId"
         element={
           <RoleProtectedRoute
-            allowedRoles={["Admin", "Employee", "Case Manager", "Field Staff"]}
+            allowedRoles={["Admin", "Office Manager", "Case Manager", "Field Staff"]}
           >
             <CaseDetailsPage />
           </RoleProtectedRoute>
@@ -58,10 +58,10 @@ function AppRoutes() {
       />
 
       <Route
-        path="/field-staff"
+        path="/staff-directory"
         element={
           <RoleProtectedRoute
-            allowedRoles={["Admin", "Employee", "Case Manager"]}
+            allowedRoles={["Admin", "Office Manager", "HR Manager", "Case Manager"]}
           >
             <FieldStaffPage />
           </RoleProtectedRoute>
@@ -69,10 +69,10 @@ function AppRoutes() {
       />
 
       <Route
-        path="/field-staff/:staffId"
+        path="/staff-directory/:staffId"
         element={
           <RoleProtectedRoute
-            allowedRoles={["Admin", "Employee", "Case Manager"]}
+            allowedRoles={["Admin", "Office Manager", "HR Manager", "Case Manager"]}
           >
             <StaffDetailsPage />
           </RoleProtectedRoute>
@@ -83,7 +83,7 @@ function AppRoutes() {
         path="/clients"
         element={
           <RoleProtectedRoute
-            allowedRoles={["Admin", "Case Manager", "Client"]}
+            allowedRoles={["Admin", "Office Manager", "Case Manager", "Client"]}
           >
             <ClientDirectoryPage />
           </RoleProtectedRoute>
@@ -94,7 +94,7 @@ function AppRoutes() {
         path="/clients/:clientId"
         element={
           <RoleProtectedRoute
-            allowedRoles={["Admin", "Case Manager", "Client"]}
+            allowedRoles={["Admin", "Office Manager", "Case Manager", "Client"]}
           >
             <ClientDetailsPage />
           </RoleProtectedRoute>
@@ -107,9 +107,10 @@ function AppRoutes() {
           <RoleProtectedRoute
             allowedRoles={[
               "Admin",
-              "Employee",
+              "Office Manager",
               "Case Manager",
               "Field Staff",
+              "HR Manager",
               "Parent",
               "Client",
             ]}
@@ -131,7 +132,9 @@ function AppRoutes() {
       <Route
         path="/reports"
         element={
-          <RoleProtectedRoute allowedRoles={["Admin", "Case Manager", "Client"]}>
+          <RoleProtectedRoute
+            allowedRoles={["Admin", "Office Manager", "Case Manager", "HR Manager", "Client"]}
+          >
             <ReportsPage />
           </RoleProtectedRoute>
         }
@@ -141,7 +144,7 @@ function AppRoutes() {
         path="/scheduling"
         element={
           <RoleProtectedRoute
-            allowedRoles={["Admin", "Employee", "Case Manager", "Field Staff"]}
+            allowedRoles={["Admin", "Office Manager", "Case Manager", "Field Staff"]}
           >
             <SchedulingPage />
           </RoleProtectedRoute>

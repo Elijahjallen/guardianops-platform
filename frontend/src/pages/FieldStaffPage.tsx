@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
@@ -17,6 +17,9 @@ type ApiStaffMember = {
   createdAt: string;
 };
 
+type SortKey = "employeeId" | "name" | "role" | "status" | "homeAirport" | "email";
+type SortDirection = "asc" | "desc";
+
 const staffRoles = [
   "All Roles",
   "Admin",
@@ -31,13 +34,11 @@ function FieldStaffPage() {
 
   const [staff, setStaff] = useState<ApiStaffMember[]>([]);
   const [roleFilter, setRoleFilter] = useState("All Roles");
+  const [searchText, setSearchText] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [isLoading, setIsLoading] = useState(true);
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
-
-  const filteredStaff =
-    roleFilter === "All Roles"
-      ? staff
-      : staff.filter((member) => member.role === roleFilter);
 
   async function loadStaff() {
     try {
@@ -54,6 +55,45 @@ function FieldStaffPage() {
   useEffect(() => {
     loadStaff();
   }, []);
+
+  function handleSort(column: SortKey) {
+    if (sortKey === column) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortKey(column);
+    setSortDirection("asc");
+  }
+
+  const filteredAndSortedStaff = useMemo(() => {
+    const searchValue = searchText.toLowerCase();
+
+    const filtered = staff.filter((member) => {
+      const matchesSearch =
+        member.employeeId.toLowerCase().includes(searchValue) ||
+        member.name.toLowerCase().includes(searchValue) ||
+        member.role.toLowerCase().includes(searchValue) ||
+        member.status.toLowerCase().includes(searchValue) ||
+        member.homeAirport.toLowerCase().includes(searchValue) ||
+        member.phone.toLowerCase().includes(searchValue) ||
+        member.email.toLowerCase().includes(searchValue);
+
+      const matchesRole =
+        roleFilter === "All Roles" || member.role === roleFilter;
+
+      return matchesSearch && matchesRole;
+    });
+
+    return [...filtered].sort((a, b) => {
+      const aValue = getSortValue(a, sortKey);
+      const bValue = getSortValue(b, sortKey);
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [staff, searchText, roleFilter, sortKey, sortDirection]);
 
   return (
     <DashboardLayout>
@@ -99,45 +139,97 @@ function FieldStaffPage() {
       </section>
 
       <section className="mt-6 rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-slate-200 p-6 lg:flex-row lg:items-center lg:justify-between">
-          <div>
+        <div className="border-b border-slate-200 p-6">
+          <div className="mb-5">
             <h2 className="text-2xl font-bold text-slate-950">
               Employee Directory
             </h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">
-              Showing {filteredStaff.length} of {staff.length} employees
+              Showing {filteredAndSortedStaff.length} of {staff.length} employees
             </p>
           </div>
 
-          <select
-            value={roleFilter}
-            onChange={(event) => setRoleFilter(event.target.value)}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 outline-none lg:w-[260px]"
-          >
-            {staffRoles.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </select>
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <input
+              type="text"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="Search employees..."
+              className="w-full rounded-2xl border border-slate-300 bg-white px-5 py-3 text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 xl:max-w-xl"
+            />
+
+            <select
+              value={roleFilter}
+              onChange={(event) => setRoleFilter(event.target.value)}
+              className="w-full rounded-2xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 xl:w-[260px]"
+            >
+              {staffRoles.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px] text-left">
             <thead className="bg-slate-50 text-sm font-bold uppercase text-slate-600">
               <tr>
-                <th className="px-6 py-4">Employee ID</th>
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Role</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Home Airport</th>
-                <th className="px-6 py-4">Contact</th>
+                <SortableHeader
+                  label="Employee ID"
+                  sortKeyValue="employeeId"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+
+                <SortableHeader
+                  label="Name"
+                  sortKeyValue="name"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+
+                <SortableHeader
+                  label="Role"
+                  sortKeyValue="role"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+
+                <SortableHeader
+                  label="Status"
+                  sortKeyValue="status"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+
+                <SortableHeader
+                  label="Home Airport"
+                  sortKeyValue="homeAirport"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+
+                <SortableHeader
+                  label="Contact"
+                  sortKeyValue="email"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={handleSort}
+                />
+
                 <th className="px-6 py-4">Action</th>
               </tr>
             </thead>
 
             <tbody>
-              {filteredStaff.map((member) => (
+              {filteredAndSortedStaff.map((member) => (
                 <tr
                   key={member.id}
                   className="border-t border-slate-100 hover:bg-slate-50"
@@ -188,9 +280,9 @@ function FieldStaffPage() {
             </div>
           )}
 
-          {!isLoading && filteredStaff.length === 0 && (
+          {!isLoading && filteredAndSortedStaff.length === 0 && (
             <div className="p-8 text-center font-semibold text-slate-500">
-              No employees found for this role.
+              No employees match your search or role filter.
             </div>
           )}
         </div>
@@ -203,6 +295,41 @@ function FieldStaffPage() {
       />
     </DashboardLayout>
   );
+}
+
+function SortableHeader({
+  label,
+  sortKeyValue,
+  activeSortKey,
+  direction,
+  onSort,
+}: {
+  label: string;
+  sortKeyValue: SortKey;
+  activeSortKey: SortKey;
+  direction: SortDirection;
+  onSort: (key: SortKey) => void;
+}) {
+  const isActive = activeSortKey === sortKeyValue;
+
+  return (
+    <th className="px-6 py-4">
+      <button
+        type="button"
+        onClick={() => onSort(sortKeyValue)}
+        className="flex items-center gap-2 text-left font-bold uppercase text-slate-600 hover:text-blue-600"
+      >
+        <span>{label}</span>
+        <span className="text-xs">
+          {isActive ? (direction === "asc" ? "▲" : "▼") : "↕"}
+        </span>
+      </button>
+    </th>
+  );
+}
+
+function getSortValue(member: ApiStaffMember, key: SortKey) {
+  return member[key].toLowerCase();
 }
 
 function SummaryCard({ title, value }: { title: string; value: string }) {
