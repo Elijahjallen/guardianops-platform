@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { createCase, getClients, getStaff, getUsersForAdmin } from "../../services/api";
+import {
+  createCase,
+  getClients,
+  getStaff,
+  getUsersForAdmin,
+} from "../../services/api";
 
 type NewCaseModalProps = {
   isOpen: boolean;
@@ -16,6 +21,7 @@ type ClientOption = {
 type StaffOption = {
   id: string;
   name: string;
+  role: string;
   status: string;
 };
 
@@ -28,12 +34,14 @@ type UserOption = {
 };
 
 function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
-  const [caseNumber, setCaseNumber] = useState("");
   const [clientName, setClientName] = useState("");
-  const [assignedStaff, setAssignedStaff] = useState("");
+  const [assignedCaseManager, setAssignedCaseManager] = useState("");
+  const [assignedFieldStaff, setAssignedFieldStaff] = useState("");
   const [destination, setDestination] = useState("");
   const [pickupDate, setPickupDate] = useState("");
-  const [status, setStatus] = useState("Scheduled");
+  const [status, setStatus] = useState("Pending");
+  const [casePriority, setCasePriority] = useState("Standard");
+
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [staff, setStaff] = useState<StaffOption[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
@@ -64,8 +72,12 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
 
   if (!isOpen) return null;
 
-  const availableStaff = staff.filter(
-    (member) => member.status === "Available" || member.status === "En Route"
+  const caseManagers = staff.filter(
+    (member) => member.role === "Case Manager" && member.status !== "Inactive"
+  );
+
+  const fieldStaff = staff.filter(
+    (member) => member.role === "Field Staff" && member.status !== "Inactive"
   );
 
   const linkedParents = users.filter(
@@ -76,11 +88,6 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
 
   async function handleCreateCase() {
     setErrorMessage("");
-
-    if (!caseNumber.trim()) {
-      setErrorMessage("Case number is required.");
-      return;
-    }
 
     if (!clientName.trim()) {
       setErrorMessage("Client name is required.");
@@ -99,20 +106,22 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
 
     try {
       await createCase({
-        caseNumber,
         clientName,
         status,
         destination,
         pickupDate,
-        staffName: assignedStaff,
+        assignedCaseManager: assignedCaseManager || undefined,
+        assignedFieldStaff: assignedFieldStaff || undefined,
+        casePriority,
       });
 
-      setCaseNumber("");
       setClientName("");
-      setAssignedStaff("");
+      setAssignedCaseManager("");
+      setAssignedFieldStaff("");
       setDestination("");
       setPickupDate("");
-      setStatus("Scheduled");
+      setStatus("Pending");
+      setCasePriority("Standard");
 
       onCaseCreated?.();
       onClose();
@@ -123,7 +132,7 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/60 px-4 py-8">
       <div className="w-full max-w-4xl rounded-3xl bg-white p-8 shadow-2xl">
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -132,7 +141,8 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
             </h2>
 
             <p className="mt-1 text-slate-500">
-              Select a client, verify linked parent/client access, and assign available staff.
+              Case number will be generated automatically when the case is
+              created.
             </p>
           </div>
 
@@ -150,14 +160,17 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
           </div>
         )}
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <Field
-            label="Case Number"
-            value={caseNumber}
-            onChange={setCaseNumber}
-            placeholder="CASE-1003"
-          />
+        <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 p-5">
+          <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+            Auto-generated case number
+          </p>
+          <p className="mt-1 text-slate-700">
+            GuardianOps will assign the next available case number in the format{" "}
+            <span className="font-bold text-slate-950">2026-00000</span>.
+          </p>
+        </div>
 
+        <div className="grid gap-5 md:grid-cols-2">
           <div>
             <label className="mb-2 block font-bold text-slate-950">
               Client Name
@@ -177,8 +190,62 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
             </select>
           </div>
 
-          <div className="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <p className="font-bold text-slate-950">Linked Parent / Client Access</p>
+          <Select
+            label="Status"
+            value={status}
+            onChange={setStatus}
+            options={[
+              "Pending",
+              "Under Review",
+              "Scheduled",
+              "Ready For Transport",
+              "In Transit",
+              "Completed",
+              "Cancelled",
+            ]}
+          />
+
+          <Select
+            label="Priority"
+            value={casePriority}
+            onChange={setCasePriority}
+            options={["Standard", "High", "Urgent"]}
+          />
+
+          <Field
+            label="Destination"
+            value={destination}
+            onChange={setDestination}
+            placeholder="Boise, ID"
+          />
+
+          <Field
+            label="Pickup Date"
+            type="date"
+            value={pickupDate}
+            onChange={setPickupDate}
+          />
+
+          <Select
+            label="Assigned Case Manager"
+            value={assignedCaseManager}
+            onChange={setAssignedCaseManager}
+            options={caseManagers.map((member) => member.name)}
+            placeholder="Unassigned"
+          />
+
+          <Select
+            label="Assigned Field Staff"
+            value={assignedFieldStaff}
+            onChange={setAssignedFieldStaff}
+            options={fieldStaff.map((member) => member.name)}
+            placeholder="Unassigned"
+          />
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 md:col-span-2">
+            <p className="font-bold text-slate-950">
+              Linked Parent / Client Access
+            </p>
 
             {!clientName && (
               <p className="mt-2 text-sm font-semibold text-slate-500">
@@ -208,58 +275,6 @@ function NewCaseModal({ isOpen, onClose, onCaseCreated }: NewCaseModalProps) {
                 ))}
               </div>
             )}
-          </div>
-
-          <div>
-            <label className="mb-2 block font-bold text-slate-950">
-              Assigned Staff
-            </label>
-
-            <select
-              value={assignedStaff}
-              onChange={(event) => setAssignedStaff(event.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
-            >
-              <option value="">Unassigned</option>
-              {availableStaff.map((member) => (
-                <option key={member.id} value={member.name}>
-                  {member.name} — {member.status}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <Field
-            label="Destination"
-            value={destination}
-            onChange={setDestination}
-            placeholder="Boise, ID"
-          />
-
-          <Field
-            label="Pickup Date"
-            type="date"
-            value={pickupDate}
-            onChange={setPickupDate}
-          />
-
-          <div>
-            <label className="mb-2 block font-bold text-slate-950">
-              Status
-            </label>
-
-            <select
-              value={status}
-              onChange={(event) => setStatus(event.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
-            >
-              <option>Scheduled</option>
-              <option>Pending</option>
-              <option>In Progress</option>
-              <option>In Transit</option>
-              <option>Completed</option>
-              <option>Cancelled</option>
-            </select>
           </div>
         </div>
 
@@ -307,6 +322,40 @@ function Field({
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
       />
+    </div>
+  );
+}
+
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block font-bold text-slate-950">{label}</label>
+
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+      >
+        {placeholder && <option value="">{placeholder}</option>}
+
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

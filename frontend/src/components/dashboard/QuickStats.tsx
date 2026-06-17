@@ -1,74 +1,94 @@
 import { useEffect, useState } from "react";
 
-import { getDashboardStats } from "../../services/api";
+import { getCases, getStaff } from "../../services/api";
 
 import CasesIcon from "../../assets/icons/Cases-Icon.svg";
 import PendingQuotesIcon from "../../assets/icons/Pending-Quotes-Icon.svg";
 import FieldStaffIcon from "../../assets/icons/Field-Staff-Icon-Purple.svg";
 import OpenNotificationsIcon from "../../assets/icons/Open-Notifications-Icon.svg";
 
-import UpArrowIcon from "../../assets/icons/Up-Arrow-Icon.svg";
-import DownArrowIcon from "../../assets/icons/Down-Arrow-Notifications.svg";
+type ApiCase = {
+  id: string;
+  status: string;
+  travelBooked?: boolean;
+  casePriority?: string;
+};
 
-type DashboardStats = {
-  totalCases: number;
-  totalClients: number;
-  totalStaff: number;
-  totalNotifications: number;
-  pendingCases: number;
-  completedCases: number;
-  activeStaff: number;
-  upcomingPickups: number;
+type ApiStaffMember = {
+  id: string;
+  role: string;
+  status: string;
 };
 
 function QuickStats() {
-  const [statsData, setStatsData] = useState<DashboardStats | null>(null);
+  const [cases, setCases] = useState<ApiCase[]>([]);
+  const [staff, setStaff] = useState<ApiStaffMember[]>([]);
 
   useEffect(() => {
-    async function loadDashboardStats() {
+    async function loadDashboardData() {
       try {
-        const data = await getDashboardStats();
-        setStatsData(data);
+        const [caseData, staffData] = await Promise.all([
+          getCases(),
+          getStaff(),
+        ]);
+
+        setCases(caseData);
+        setStaff(staffData);
       } catch (error) {
-        console.error("Failed to load dashboard stats:", error);
+        console.error("Failed to load dashboard data:", error);
       }
     }
 
-    loadDashboardStats();
+    loadDashboardData();
   }, []);
+
+  const activeCases = cases.filter(
+    (item) => item.status !== "Completed" && item.status !== "Cancelled"
+  ).length;
+
+  const urgentCases = cases.filter(
+    (item) => item.casePriority === "Urgent"
+  ).length;
+
+  const travelPending = cases.filter(
+    (item) =>
+      item.status !== "Completed" &&
+      item.status !== "Cancelled" &&
+      !item.travelBooked
+  ).length;
+
+  const availableStaff = staff.filter(
+    (member) => member.status === "Available"
+  ).length;
 
   const stats = [
     {
       title: "Active Cases",
-      value: statsData?.totalCases ?? 0,
-      change: statsData?.completedCases ?? 0,
-      direction: "up",
+      value: activeCases,
+      subtitle: `${cases.length} total cases`,
       icon: CasesIcon,
       iconBackground: "bg-blue-50",
     },
     {
-      title: "Pending Cases",
-      value: statsData?.pendingCases ?? 0,
-      change: statsData?.upcomingPickups ?? 0,
-      direction: "up",
+      title: "Urgent Cases",
+      value: urgentCases,
+      subtitle: "Require priority review",
       icon: PendingQuotesIcon,
-      iconBackground: "bg-green-50",
+      iconBackground: "bg-red-50",
     },
     {
-      title: "Field Staff Active",
-      value: statsData?.activeStaff ?? 0,
-      change: statsData?.totalStaff ?? 0,
-      direction: "up",
-      icon: FieldStaffIcon,
-      iconBackground: "bg-purple-50",
-    },
-    {
-      title: "Open Notifications",
-      value: statsData?.totalNotifications ?? 0,
-      change: statsData?.totalClients ?? 0,
-      direction: "down",
+      title: "Travel Pending",
+      value: travelPending,
+      subtitle: "Open cases not booked",
       icon: OpenNotificationsIcon,
       iconBackground: "bg-orange-50",
+    },
+    {
+      title: "Available Staff",
+      value: availableStaff,
+      subtitle: `${staff.length} total employees`,
+      icon: FieldStaffIcon,
+      iconBackground: "bg-purple-50",
     },
   ];
 
@@ -77,49 +97,30 @@ function QuickStats() {
       {stats.map((stat) => (
         <div
           key={stat.title}
-          className="flex min-h-[135px] items-center gap-6 rounded-xl border border-slate-300 bg-white px-8 py-6 shadow-sm"
+          className="flex min-h-[135px] items-center gap-6 rounded-2xl border border-slate-200 bg-white px-7 py-6 shadow-sm"
         >
           <div
-            className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-lg ${stat.iconBackground}`}
+            className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl ${stat.iconBackground}`}
           >
             <img
               src={stat.icon}
               alt={stat.title}
-              className="h-12 w-12 object-contain"
+              className="h-9 w-9 object-contain"
             />
           </div>
 
           <div>
-            <p className="text-lg font-semibold text-slate-950">
+            <p className="text-sm font-bold uppercase tracking-wide text-slate-500">
               {stat.title}
             </p>
 
-            <p className="mt-2 text-4xl font-semibold text-slate-950">
+            <p className="mt-2 text-4xl font-bold text-slate-950">
               {stat.value}
             </p>
 
-            <div className="mt-2 flex items-center gap-2 text-sm">
-              <img
-                src={stat.direction === "up" ? UpArrowIcon : DownArrowIcon}
-                alt={stat.direction}
-                className="h-4 w-4"
-              />
-
-              <span
-                className={`font-bold ${
-                  stat.direction === "up" ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {stat.change}
-              </span>
-
-              <span className="text-slate-950">
-                {stat.title === "Active Cases" && "completed"}
-                {stat.title === "Pending Cases" && "upcoming pickups"}
-                {stat.title === "Field Staff Active" && "total staff"}
-                {stat.title === "Open Notifications" && "total clients"}
-              </span>
-            </div>
+            <p className="mt-1 text-sm font-semibold text-slate-500">
+              {stat.subtitle}
+            </p>
           </div>
         </div>
       ))}

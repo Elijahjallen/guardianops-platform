@@ -10,6 +10,10 @@ type ApiCase = {
   destination: string;
   pickupDate: string;
   staffName?: string | null;
+  assignedCaseManager?: string | null;
+  assignedFieldStaff?: string | null;
+  travelBooked?: boolean;
+  casePriority?: string;
   createdAt: string;
 };
 
@@ -33,12 +37,21 @@ function ActiveCasesTable() {
     loadCases();
   }, []);
 
-  const visibleCases = cases.slice(0, 8);
+  const activeCases = cases.filter(
+    (item) => item.status !== "Completed" && item.status !== "Cancelled"
+  );
+
+  const visibleCases = activeCases.slice(0, 8);
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 p-8">
-        <h2 className="text-3xl font-bold text-slate-900">Active Cases</h2>
+        <div>
+          <h2 className="text-3xl font-bold text-slate-900">Active Cases</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">
+            Current open transports requiring operational oversight
+          </p>
+        </div>
 
         <div className="flex gap-4">
           <button
@@ -58,30 +71,18 @@ function ActiveCasesTable() {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] text-left">
+        <table className="w-full min-w-[1200px] text-left">
           <thead className="border-b border-slate-200 bg-slate-50">
             <tr>
-              <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-slate-500">
-                Case #
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-slate-500">
-                Client
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-slate-500">
-                Status
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-slate-500">
-                Assigned Staff
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-slate-500">
-                Destination
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-slate-500">
-                Pickup Date
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-slate-500">
-                Action
-              </th>
+              <Header label="Case #" />
+              <Header label="Client" />
+              <Header label="Priority" />
+              <Header label="Case Manager" />
+              <Header label="Field Staff" />
+              <Header label="Status" />
+              <Header label="Travel" />
+              <Header label="Pickup Date" />
+              <Header label="Action" />
             </tr>
           </thead>
 
@@ -100,15 +101,23 @@ function ActiveCasesTable() {
                 </td>
 
                 <td className="px-4 py-5">
+                  <PriorityBadge priority={item.casePriority || "Standard"} />
+                </td>
+
+                <td className="px-4 py-5 text-slate-700">
+                  {item.assignedCaseManager || "Unassigned"}
+                </td>
+
+                <td className="px-4 py-5 text-slate-700">
+                  {item.assignedFieldStaff || "Unassigned"}
+                </td>
+
+                <td className="px-4 py-5">
                   <StatusBadge status={item.status} />
                 </td>
 
-                <td className="px-4 py-5 text-slate-700">
-                  {item.staffName || "Unassigned"}
-                </td>
-
-                <td className="px-4 py-5 text-slate-700">
-                  {item.destination}
+                <td className="px-4 py-5">
+                  <TravelBadge isBooked={Boolean(item.travelBooked)} />
                 </td>
 
                 <td className="px-4 py-5 text-slate-700">
@@ -143,34 +152,32 @@ function ActiveCasesTable() {
 
       <div className="flex items-center justify-between border-t border-slate-200 p-5 text-sm text-slate-600">
         <span>
-          Showing {visibleCases.length === 0 ? 0 : 1} to {visibleCases.length} of{" "}
-          {cases.length} Results
+          Showing {visibleCases.length} of {activeCases.length} active cases
         </span>
 
-        <div className="flex items-center gap-2">
-          <button className="h-10 w-10 rounded-lg border border-slate-200">
-            &lt;
-          </button>
-
-          <button className="h-10 w-10 rounded-lg bg-blue-600 text-white">
-            1
-          </button>
-
-          <button className="h-10 w-10 rounded-lg border border-slate-200">
-            2
-          </button>
-
-          <button className="h-10 w-10 rounded-lg border border-slate-200">
-            &gt;
-          </button>
-        </div>
+        <button
+          onClick={() => navigate("/cases")}
+          className="rounded-lg border border-slate-200 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Manage Cases
+        </button>
       </div>
     </div>
   );
 }
 
+function Header({ label }: { label: string }) {
+  return (
+    <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-slate-500">
+      {label}
+    </th>
+  );
+}
+
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
+    "Under Review": "bg-amber-100 text-amber-700",
+    "Ready For Transport": "bg-indigo-100 text-indigo-700",
     "En Route": "bg-blue-100 text-blue-700",
     Scheduled: "bg-purple-100 text-purple-700",
     Pending: "bg-orange-100 text-orange-700",
@@ -187,6 +194,36 @@ function StatusBadge({ status }: { status: string }) {
       }`}
     >
       {status}
+    </span>
+  );
+}
+
+function PriorityBadge({ priority }: { priority: string }) {
+  const styles: Record<string, string> = {
+    Standard: "bg-slate-100 text-slate-700",
+    High: "bg-orange-100 text-orange-700",
+    Urgent: "bg-red-100 text-red-700",
+  };
+
+  return (
+    <span
+      className={`rounded-lg px-3 py-1 text-sm font-bold ${
+        styles[priority] || "bg-slate-100 text-slate-700"
+      }`}
+    >
+      {priority}
+    </span>
+  );
+}
+
+function TravelBadge({ isBooked }: { isBooked: boolean }) {
+  return (
+    <span
+      className={`rounded-lg px-3 py-1 text-sm font-bold ${
+        isBooked ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"
+      }`}
+    >
+      {isBooked ? "Booked" : "Pending"}
     </span>
   );
 }

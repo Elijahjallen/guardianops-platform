@@ -11,7 +11,7 @@ export const api = axios.create({
 });
 
 type CaseData = {
-  caseNumber: string;
+  caseNumber?: string;
   clientName: string;
   status: string;
   destination: string;
