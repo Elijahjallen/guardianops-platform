@@ -10,6 +10,25 @@ export const api = axios.create({
   },
 });
 
+type CaseData = {
+  caseNumber: string;
+  clientName: string;
+  status: string;
+  destination: string;
+  pickupDate: string;
+  staffName?: string;
+
+  assignedCaseManager?: string;
+  assignedFieldStaff?: string;
+  transportDate?: string;
+  pickupLocation?: string;
+  destinationLocation?: string;
+  travelBooked?: boolean;
+  flightConfirmation?: string;
+  hotelConfirmation?: string;
+  casePriority?: string;
+};
+
 export async function getCases() {
   const response = await api.get("/cases");
   return response.data;
@@ -30,14 +49,7 @@ export async function getNotifications() {
   return response.data;
 }
 
-export async function createCase(caseData: {
-  caseNumber: string;
-  clientName: string;
-  status: string;
-  destination: string;
-  pickupDate: string;
-  staffName?: string;
-}) {
+export async function createCase(caseData: CaseData) {
   const response = await api.post("/cases", caseData);
   return response.data;
 }
@@ -47,17 +59,7 @@ export async function getCaseById(caseId: string) {
   return response.data;
 }
 
-export async function updateCase(
-  caseId: string,
-  caseData: {
-    caseNumber: string;
-    clientName: string;
-    status: string;
-    destination: string;
-    pickupDate: string;
-    staffName?: string;
-  }
-) {
+export async function updateCase(caseId: string, caseData: CaseData) {
   const response = await api.put(`/cases/${caseId}`, caseData);
   return response.data;
 }
@@ -334,7 +336,7 @@ export async function submitIntakeForm(intakeData: any) {
   return response.data;
 }
 
-  export async function getYouthProfile(caseId: string) {
+export async function getYouthProfile(caseId: string) {
   const response = await api.get(`/intake/youth-profile/${caseId}`);
   return response.data;
 }

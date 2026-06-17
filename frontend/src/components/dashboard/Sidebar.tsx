@@ -28,62 +28,78 @@ const menuItems: MenuItem[] = [
     title: "Dashboard",
     icon: HomeIcon,
     path: "/dashboard",
-    allowedRoles: ["Admin", "Employee", "Case Manager", "Field Staff", "Parent", "Client"],
+    allowedRoles: [
+      "Admin",
+      "Office Manager",
+      "Case Manager",
+      "Field Staff",
+      "HR Manager",
+      "Parent",
+      "Client",
+    ],
   },
   {
     title: "Cases",
     icon: CasesIcon,
     path: "/cases",
-    allowedRoles: ["Admin", "Employee", "Case Manager", "Field Staff"],
+    allowedRoles: ["Admin", "Office Manager", "Case Manager", "Field Staff"],
   },
   {
     title: "Intake Forms",
     icon: IntakeIcon,
     path: "/intake-forms",
-    allowedRoles: ["Admin", "Employee", "Case Manager"],
+    allowedRoles: ["Admin", "Office Manager", "Case Manager"],
   },
   {
     title: "Quotes",
     icon: QuotesIcon,
     path: "/quotes",
-    allowedRoles: ["Admin", "Employee", "Case Manager"],
+    allowedRoles: ["Admin", "Office Manager", "Case Manager"],
   },
   {
     title: "Expenses",
     icon: ExpensesIcon,
     path: "/expenses",
-    allowedRoles: ["Admin", "Employee", "Case Manager"],
+    allowedRoles: ["Admin", "Office Manager", "Case Manager"],
   },
   {
     title: "Scheduling",
     icon: SchedulingIcon,
     path: "/scheduling",
-    allowedRoles: ["Admin", "Employee", "Case Manager", "Field Staff"],
+    allowedRoles: ["Admin", "Office Manager", "Case Manager", "Field Staff"],
   },
   {
-    title: "Field Staff",
+    title: "Staff Directory",
     icon: FieldStaffIcon,
     path: "/field-staff",
-    allowedRoles: ["Admin", "Employee", "Case Manager"],
+    allowedRoles: ["Admin", "Office Manager", "HR Manager", "Case Manager"],
   },
   {
     title: "Notifications",
     icon: NotificationsIcon,
     path: "/notifications",
     badge: "12",
-    allowedRoles: ["Admin", "Employee", "Case Manager", "Field Staff", "Parent", "Client"],
+    allowedRoles: [
+      "Admin",
+      "Office Manager",
+      "Case Manager",
+      "Field Staff",
+      "HR Manager",
+      "Parent",
+      "Client",
+    ],
   },
   {
     title: "Reports",
     icon: ReportsIcon,
     path: "/reports",
-    allowedRoles: ["Admin", "Case Manager", "Client"],
+    allowedRoles: ["Admin", "Office Manager", "Case Manager", "HR Manager", "Client"],
   },
   {
     title: "Client Directory",
     icon: ClientDirectoryIcon,
     path: "/clients",
-    allowedRoles: ["Admin", "Case Manager", "Client"],
+    allowedRoles: ["Admin", "Office Manager", "Case Manager", "Client"],
   },
   {
     title: "Settings",
@@ -95,20 +111,29 @@ const menuItems: MenuItem[] = [
     title: "Support",
     icon: SupportIcon,
     path: "/support",
-    allowedRoles: ["Admin", "Employee", "Case Manager", "Field Staff", "Parent", "Client"],
+    allowedRoles: [
+      "Admin",
+      "Office Manager",
+      "Case Manager",
+      "Field Staff",
+      "HR Manager",
+      "Parent",
+      "Client",
+    ],
   },
 ];
 
 function Sidebar() {
- const storedUser = localStorage.getItem("guardianops-user");
+  const storedUser = localStorage.getItem("guardianops-user");
 
-let user: { name?: string; role?: string } | null = null;
+  let user: { name?: string; role?: string } | null = null;
 
-try {
-  user = storedUser ? JSON.parse(storedUser) : null;
-} catch {
-  user = null;
-}
+  try {
+    user = storedUser ? JSON.parse(storedUser) : null;
+  } catch {
+    user = null;
+  }
+
   const userRole = user?.role || "";
 
   const visibleMenuItems = menuItems.filter((item) =>
@@ -116,18 +141,18 @@ try {
   );
 
   const adjustedMenuItems = visibleMenuItems.map((item) => {
-  if (
-    item.title === "Dashboard" &&
-    (userRole === "Parent" || userRole === "Client")
-  ) {
-    return {
-      ...item,
-      path: "/parent-dashboard",
-    };
-  }
+    if (
+      item.title === "Dashboard" &&
+      (userRole === "Parent" || userRole === "Client")
+    ) {
+      return {
+        ...item,
+        path: "/parent-dashboard",
+      };
+    }
 
-  return item;
-});
+    return item;
+  });
 
   const initials =
     user?.name
