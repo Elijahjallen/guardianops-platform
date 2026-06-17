@@ -171,7 +171,7 @@ function FieldStaffPage() {
 
                   <td className="px-6 py-5">
                     <button
-                      onClick={() => navigate(`/field-staff/${member.id}`)}
+                      onClick={() => navigate(`/staff-directory/${member.id}`)}
                       className="font-bold text-blue-600 hover:text-blue-700"
                     >
                       View Profile

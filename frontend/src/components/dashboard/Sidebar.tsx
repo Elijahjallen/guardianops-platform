@@ -71,7 +71,7 @@ const menuItems: MenuItem[] = [
   {
     title: "Staff Directory",
     icon: FieldStaffIcon,
-    path: "/field-staff",
+    path: "/staff-directory",
     allowedRoles: ["Admin", "Office Manager", "HR Manager", "Case Manager"],
   },
   {

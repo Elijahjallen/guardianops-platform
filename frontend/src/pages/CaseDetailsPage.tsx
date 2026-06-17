@@ -17,6 +17,15 @@ type ApiCase = {
   destination: string;
   pickupDate: string;
   staffName?: string | null;
+  assignedCaseManager?: string | null;
+  assignedFieldStaff?: string | null;
+  transportDate?: string | null;
+  pickupLocation?: string | null;
+  destinationLocation?: string | null;
+  travelBooked?: boolean;
+  flightConfirmation?: string | null;
+  hotelConfirmation?: string | null;
+  casePriority?: string;
   createdAt: string;
 };
 
@@ -111,7 +120,8 @@ function CaseDetailsPage() {
           </h1>
 
           <p className="mt-2 text-slate-500">
-            Database-backed transport case details and activity timeline.
+            Database-backed transport case details, assignments, travel status,
+            documents, messages, and activity timeline.
           </p>
         </div>
 
@@ -134,49 +144,74 @@ function CaseDetailsPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <section className="space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-slate-950">
-                Transport Information
-              </h2>
-
-              <StatusBadge status={caseItem.status} />
-            </div>
-
-            <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <InfoCard title="Case Overview" status={caseItem.status}>
+            <DetailGrid>
               <Detail label="Case Number" value={caseItem.caseNumber} />
               <Detail label="Client" value={caseItem.clientName} />
               <Detail label="Status" value={caseItem.status} />
-              <Detail
-                label="Assigned Staff"
-                value={caseItem.staffName || "Unassigned"}
-              />
+              <Detail label="Priority" value={caseItem.casePriority || "Standard"} />
               <Detail label="Destination" value={caseItem.destination} />
-              <Detail
-                label="Pickup Date"
-                value={formatDate(caseItem.pickupDate)}
-              />
               <Detail label="Created" value={formatDate(caseItem.createdAt)} />
-            </div>
+            </DetailGrid>
+          </InfoCard>
 
-            <div className="mt-8 rounded-2xl bg-slate-50 p-6">
-              <h3 className="font-bold text-slate-950">Database Record</h3>
+          <InfoCard title="Assignment">
+            <DetailGrid>
+              <Detail
+                label="Case Manager"
+                value={caseItem.assignedCaseManager || "Unassigned"}
+              />
+              <Detail
+                label="Field Staff"
+                value={caseItem.assignedFieldStaff || "Unassigned"}
+              />
+            </DetailGrid>
+          </InfoCard>
 
-              <p className="mt-3 text-slate-600">
-                This case is being loaded from PostgreSQL through Express and
-                Prisma.
-              </p>
-            </div>
-          </div>
+          <InfoCard title="Transport Details">
+            <DetailGrid>
+              <Detail label="Pickup Date" value={formatDate(caseItem.pickupDate)} />
+              <Detail
+                label="Transport Date"
+                value={formatDate(caseItem.transportDate || "")}
+              />
+              <Detail
+                label="Pickup Location"
+                value={caseItem.pickupLocation || "Not provided"}
+              />
+              <Detail
+                label="Destination Location"
+                value={caseItem.destinationLocation || "Not provided"}
+              />
+            </DetailGrid>
+          </InfoCard>
+
+          <InfoCard title="Travel Details">
+            <DetailGrid>
+              <Detail
+                label="Travel Booked"
+                value={caseItem.travelBooked ? "Yes" : "No"}
+              />
+              <Detail
+                label="Flight Confirmation"
+                value={caseItem.flightConfirmation || "Not provided"}
+              />
+              <Detail
+                label="Hotel Confirmation"
+                value={caseItem.hotelConfirmation || "Not provided"}
+              />
+            </DetailGrid>
+          </InfoCard>
 
           <YouthProfilePanel caseId={caseItem.id} />
-          
+
           <CaseActivityTimeline
             caseId={caseItem.id}
             caseNumber={caseItem.caseNumber}
           />
 
           <MessagesPanel caseId={caseItem.id} />
+
           <CaseDocumentsPanel
             caseId={caseItem.id}
             caseNumber={caseItem.caseNumber}
@@ -192,12 +227,22 @@ function CaseDetailsPage() {
             <TimelineItem title="Case loaded from database" time="Just now" />
             <TimelineItem title={`Status: ${caseItem.status}`} time="Current" />
             <TimelineItem
-              title={`Assigned to ${caseItem.staffName || "Unassigned"}`}
+              title={`Priority: ${caseItem.casePriority || "Standard"}`}
               time="Current"
             />
             <TimelineItem
-              title={`Created ${formatDate(caseItem.createdAt)}`}
-              time="Database"
+              title={`Case Manager: ${
+                caseItem.assignedCaseManager || "Unassigned"
+              }`}
+              time="Current"
+            />
+            <TimelineItem
+              title={`Field Staff: ${caseItem.assignedFieldStaff || "Unassigned"}`}
+              time="Current"
+            />
+            <TimelineItem
+              title={`Travel Booked: ${caseItem.travelBooked ? "Yes" : "No"}`}
+              time="Current"
             />
           </div>
         </aside>
@@ -211,6 +256,31 @@ function CaseDetailsPage() {
       />
     </DashboardLayout>
   );
+}
+
+function InfoCard({
+  title,
+  status,
+  children,
+}: {
+  title: string;
+  status?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-slate-950">{title}</h2>
+        {status && <StatusBadge status={status} />}
+      </div>
+
+      <div className="mt-6">{children}</div>
+    </div>
+  );
+}
+
+function DetailGrid({ children }: { children: React.ReactNode }) {
+  return <div className="grid gap-6 md:grid-cols-2">{children}</div>;
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
@@ -242,6 +312,8 @@ function TimelineItem({ title, time }: { title: string; time: string }) {
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
+    "Under Review": "bg-amber-100 text-amber-700",
+    "Ready For Transport": "bg-indigo-100 text-indigo-700",
     "En Route": "bg-blue-100 text-blue-700",
     Scheduled: "bg-purple-100 text-purple-700",
     Pending: "bg-orange-100 text-orange-700",
@@ -265,7 +337,7 @@ function StatusBadge({ status }: { status: string }) {
 function formatDate(dateValue: string) {
   const date = new Date(dateValue);
 
-  if (Number.isNaN(date.getTime())) {
+  if (!dateValue || Number.isNaN(date.getTime())) {
     return "Not scheduled";
   }
 

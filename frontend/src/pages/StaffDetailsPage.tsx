@@ -74,7 +74,7 @@ function StaffDetailsPage() {
 
     try {
       await deleteStaff(staffMember.id);
-      navigate("/field-staff");
+      navigate("/staff-directory")
     } catch (error) {
       console.error("Failed to delete staff:", error);
     }
@@ -108,7 +108,7 @@ function StaffDetailsPage() {
           </h1>
 
           <button
-            onClick={() => navigate("/field-staff")}
+            onClick={() => navigate("/staff-directory")}
             className="mt-6 rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700"
           >
             Back to Staff Directory
@@ -123,7 +123,7 @@ function StaffDetailsPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <button
-            onClick={() => navigate("/field-staff")}
+            onClick={() => navigate("/staff-directory")}
             className="font-semibold text-blue-600 hover:text-blue-700"
           >
             ← Back to Staff Directory
