@@ -40,7 +40,6 @@ function EditCaseModal({
   onClose,
   onCaseUpdated,
 }: EditCaseModalProps) {
-  const [caseNumber, setCaseNumber] = useState("");
   const [clientName, setClientName] = useState("");
   const [status, setStatus] = useState("Pending");
   const [destination, setDestination] = useState("");
@@ -76,7 +75,6 @@ function EditCaseModal({
 
   useEffect(() => {
     if (caseItem) {
-      setCaseNumber(caseItem.caseNumber);
       setClientName(caseItem.clientName);
       setStatus(caseItem.status);
       setDestination(caseItem.destination);
@@ -112,7 +110,7 @@ function EditCaseModal({
 
     try {
       await updateCase(selectedCase.id, {
-        caseNumber,
+        caseNumber: selectedCase.caseNumber,
         clientName,
         status,
         destination,
@@ -165,8 +163,13 @@ function EditCaseModal({
         )}
 
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Case Number" value={caseNumber} onChange={setCaseNumber} />
-          <Field label="Client Name" value={clientName} onChange={setClientName} />
+          <ReadOnlyField label="Case Number" value={caseItem.caseNumber} />
+
+          <Field
+            label="Client Name"
+            value={clientName}
+            onChange={setClientName}
+          />
 
           <Select
             label="Status"
@@ -206,16 +209,49 @@ function EditCaseModal({
             placeholder="Select field staff"
           />
 
-          <Field label="Pickup Date" type="date" value={pickupDate} onChange={setPickupDate} />
-          <Field label="Transport Date" type="date" value={transportDate} onChange={setTransportDate} />
+          <Field
+            label="Pickup Date"
+            type="date"
+            value={pickupDate}
+            onChange={setPickupDate}
+          />
 
-          <Field label="Pickup Location" value={pickupLocation} onChange={setPickupLocation} />
-          <Field label="Destination Location" value={destinationLocation} onChange={setDestinationLocation} />
+          <Field
+            label="Transport Date"
+            type="date"
+            value={transportDate}
+            onChange={setTransportDate}
+          />
 
-          <Field label="Destination" value={destination} onChange={setDestination} />
+          <Field
+            label="Pickup Location"
+            value={pickupLocation}
+            onChange={setPickupLocation}
+          />
 
-          <Field label="Flight Confirmation" value={flightConfirmation} onChange={setFlightConfirmation} />
-          <Field label="Hotel Confirmation" value={hotelConfirmation} onChange={setHotelConfirmation} />
+          <Field
+            label="Destination Location"
+            value={destinationLocation}
+            onChange={setDestinationLocation}
+          />
+
+          <Field
+            label="Destination"
+            value={destination}
+            onChange={setDestination}
+          />
+
+          <Field
+            label="Flight Confirmation"
+            value={flightConfirmation}
+            onChange={setFlightConfirmation}
+          />
+
+          <Field
+            label="Hotel Confirmation"
+            value={hotelConfirmation}
+            onChange={setHotelConfirmation}
+          />
 
           <Select
             label="Travel Booked"
@@ -240,6 +276,18 @@ function EditCaseModal({
             Save Review
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <label className="mb-2 block font-bold text-slate-950">{label}</label>
+
+      <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-semibold text-slate-700">
+        {value || "Not provided"}
       </div>
     </div>
   );
