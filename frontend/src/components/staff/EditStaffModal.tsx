@@ -19,6 +19,16 @@ type EditStaffModalProps = {
   onStaffUpdated?: () => void;
 };
 
+const staffRoles = [
+  "Admin",
+  "Office Manager",
+  "Case Manager",
+  "Field Staff",
+  "HR Manager",
+];
+
+const staffStatuses = ["Available", "En Route", "Busy", "Off Duty", "Inactive"];
+
 function EditStaffModal({
   isOpen,
   staffMember,
@@ -27,7 +37,7 @@ function EditStaffModal({
 }: EditStaffModalProps) {
   const [employeeId, setEmployeeId] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState("Field Staff");
   const [status, setStatus] = useState("Available");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -38,8 +48,8 @@ function EditStaffModal({
     if (staffMember) {
       setEmployeeId(staffMember.employeeId);
       setName(staffMember.name);
-      setRole(staffMember.role);
-      setStatus(staffMember.status);
+      setRole(staffMember.role || "Field Staff");
+      setStatus(staffMember.status || "Available");
       setPhone(staffMember.phone);
       setEmail(staffMember.email);
       setHomeAirport(staffMember.homeAirport);
@@ -54,7 +64,7 @@ function EditStaffModal({
     try {
       if (!staffMember) return;
 
-await updateStaff(staffMember.id, {
+      await updateStaff(staffMember.id, {
         employeeId,
         name,
         role,
@@ -67,17 +77,15 @@ await updateStaff(staffMember.id, {
       onStaffUpdated?.();
       onClose();
     } catch (error) {
-      console.error("Failed to update staff:", error);
-      setErrorMessage("Failed to update staff. Check backend server.");
+      console.error("Failed to update employee:", error);
+      setErrorMessage("Failed to update employee. Check backend server.");
     }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4">
       <div className="w-full max-w-3xl rounded-3xl bg-white p-8 shadow-2xl">
-        <h2 className="text-3xl font-bold text-slate-950">
-          Edit Staff Member
-        </h2>
+        <h2 className="text-3xl font-bold text-slate-950">Edit Employee</h2>
 
         {errorMessage && (
           <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700">
@@ -86,29 +94,32 @@ await updateStaff(staffMember.id, {
         )}
 
         <div className="mt-6 grid gap-5 md:grid-cols-2">
-          <Field label="Employee ID" value={employeeId} onChange={setEmployeeId} />
+          <Field
+            label="Employee ID"
+            value={employeeId}
+            onChange={setEmployeeId}
+          />
+
           <Field label="Full Name" value={name} onChange={setName} />
-          <Field label="Role" value={role} onChange={setRole} />
 
-          <div>
-            <label className="mb-2 block font-bold text-slate-950">
-              Status
-            </label>
+          <Select
+            label="Role"
+            value={role}
+            onChange={setRole}
+            options={staffRoles}
+          />
 
-            <select
-              value={status}
-              onChange={(event) => setStatus(event.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
-            >
-              <option>Available</option>
-              <option>En Route</option>
-              <option>Busy</option>
-              <option>Off Duty</option>
-            </select>
-          </div>
+          <Select
+            label="Status"
+            value={status}
+            onChange={setStatus}
+            options={staffStatuses}
+          />
 
           <Field label="Phone" value={phone} onChange={setPhone} />
+
           <Field label="Email" value={email} onChange={setEmail} />
+
           <Field
             label="Home Airport"
             value={homeAirport}
@@ -154,6 +165,36 @@ function Field({
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
       />
+    </div>
+  );
+}
+
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+}) {
+  return (
+    <div>
+      <label className="mb-2 block font-bold text-slate-950">{label}</label>
+
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

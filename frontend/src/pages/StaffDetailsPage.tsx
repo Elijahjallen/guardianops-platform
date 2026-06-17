@@ -25,6 +25,8 @@ type ApiCase = {
   destination: string;
   pickupDate: string;
   staffName?: string | null;
+  assignedCaseManager?: string | null;
+  assignedFieldStaff?: string | null;
 };
 
 function StaffDetailsPage() {
@@ -79,14 +81,19 @@ function StaffDetailsPage() {
   }
 
   const assignedCases = staffMember
-    ? cases.filter((caseItem) => caseItem.staffName === staffMember.name)
+    ? cases.filter(
+        (caseItem) =>
+          caseItem.assignedCaseManager === staffMember.name ||
+          caseItem.assignedFieldStaff === staffMember.name ||
+          caseItem.staffName === staffMember.name
+      )
     : [];
 
   if (isLoading) {
     return (
       <DashboardLayout>
         <div className="rounded-3xl border border-slate-200 bg-white p-8 font-semibold text-slate-500 shadow-sm">
-          Loading staff profile from database...
+          Loading employee profile from database...
         </div>
       </DashboardLayout>
     );
@@ -97,14 +104,14 @@ function StaffDetailsPage() {
       <DashboardLayout>
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           <h1 className="text-3xl font-bold text-slate-950">
-            Staff Member Not Found
+            Employee Not Found
           </h1>
 
           <button
             onClick={() => navigate("/field-staff")}
             className="mt-6 rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700"
           >
-            Back to Field Staff
+            Back to Staff Directory
           </button>
         </div>
       </DashboardLayout>
@@ -119,7 +126,7 @@ function StaffDetailsPage() {
             onClick={() => navigate("/field-staff")}
             className="font-semibold text-blue-600 hover:text-blue-700"
           >
-            ← Back to Field Staff
+            ← Back to Staff Directory
           </button>
 
           <h1 className="mt-3 text-4xl font-bold text-slate-950">
@@ -127,7 +134,8 @@ function StaffDetailsPage() {
           </h1>
 
           <p className="mt-2 text-slate-500">
-            Database-backed staff profile, assignments, and contact information.
+            Database-backed employee profile, role, assignments, and contact
+            information.
           </p>
         </div>
 
@@ -136,14 +144,14 @@ function StaffDetailsPage() {
             onClick={() => setIsEditOpen(true)}
             className="rounded-xl border border-blue-600 px-6 py-3 font-bold text-blue-600 hover:bg-blue-50"
           >
-            Edit Staff
+            Edit Employee
           </button>
 
           <button
             onClick={handleDeleteStaff}
             className="rounded-xl border border-red-500 px-6 py-3 font-bold text-red-600 hover:bg-red-50"
           >
-            Delete Staff
+            Delete Employee
           </button>
         </div>
       </div>
@@ -167,7 +175,7 @@ function StaffDetailsPage() {
           <div className="mt-8 space-y-5">
             <Detail label="Employee ID" value={staffMember.employeeId} />
             <Detail label="Home Airport" value={staffMember.homeAirport} />
-            <Detail label="Active Cases" value={assignedCases.length.toString()} />
+            <Detail label="Assigned Cases" value={assignedCases.length.toString()} />
             <Detail label="Created" value={formatDate(staffMember.createdAt)} />
           </div>
         </aside>
@@ -250,7 +258,7 @@ function StaffDetailsPage() {
 
               {assignedCases.length === 0 && (
                 <div className="p-8 text-center font-semibold text-slate-500">
-                  No cases assigned to this staff member.
+                  No cases assigned to this employee.
                 </div>
               )}
             </div>
@@ -307,6 +315,7 @@ function StatusBadge({ status }: { status: string }) {
     "En Route": "bg-blue-100 text-blue-700",
     Busy: "bg-orange-100 text-orange-700",
     "Off Duty": "bg-slate-100 text-slate-700",
+    Inactive: "bg-red-100 text-red-700",
     Scheduled: "bg-purple-100 text-purple-700",
     Pending: "bg-orange-100 text-orange-700",
     "In Progress": "bg-sky-100 text-sky-700",
