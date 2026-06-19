@@ -7,12 +7,7 @@ type ApiCase = {
   caseNumber: string;
   clientName: string;
   status: string;
-  destination: string;
   pickupDate: string;
-  staffName?: string | null;
-  assignedCaseManager?: string | null;
-  assignedFieldStaff?: string | null;
-  travelBooked?: boolean;
   casePriority?: string;
   createdAt: string;
 };
@@ -37,11 +32,14 @@ function ActiveCasesTable() {
     loadCases();
   }, []);
 
-  const activeCases = cases.filter(
-    (item) => item.status !== "Completed" && item.status !== "Cancelled"
-  );
+  const activeCases = cases
+    .filter((item) => item.status !== "Completed" && item.status !== "Cancelled")
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
-  const visibleCases = activeCases.slice(0, 8);
+  const visibleCases = activeCases.slice(0, 6);
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -49,40 +47,28 @@ function ActiveCasesTable() {
         <div>
           <h2 className="text-3xl font-bold text-slate-900">Active Cases</h2>
           <p className="mt-1 text-sm font-semibold text-slate-500">
-            Current open transports requiring operational oversight
+            Newest open cases requiring operational oversight
           </p>
         </div>
 
-        <div className="flex gap-4">
-          <button
-            onClick={() => navigate("/cases")}
-            className="rounded-xl border border-blue-600 px-6 py-3 font-semibold text-blue-600 transition hover:bg-blue-50"
-          >
-            View All Cases
-          </button>
-
-          <button
-            onClick={() => navigate("/cases")}
-            className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
-          >
-            + New Case
-          </button>
-        </div>
+        <button
+          onClick={() => navigate("/cases")}
+          className="rounded-xl border border-blue-600 px-6 py-3 font-semibold text-blue-600 transition hover:bg-blue-50"
+        >
+          View All Cases
+        </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[1200px] text-left">
+      <div>
+        <table className="w-full table-fixed text-left">
           <thead className="border-b border-slate-200 bg-slate-50">
             <tr>
-              <Header label="Case #" />
-              <Header label="Client" />
-              <Header label="Priority" />
-              <Header label="Case Manager" />
-              <Header label="Field Staff" />
-              <Header label="Status" />
-              <Header label="Travel" />
-              <Header label="Pickup Date" />
-              <Header label="Action" />
+              <Header label="Case #" width="w-[18%]" />
+              <Header label="Client" width="w-[24%]" />
+              <Header label="Status" width="w-[18%]" />
+              <Header label="Priority" width="w-[14%]" />
+              <Header label="Pickup Date" width="w-[16%]" />
+              <Header label="Action" width="w-[10%]" />
             </tr>
           </thead>
 
@@ -92,24 +78,12 @@ function ActiveCasesTable() {
                 key={item.id}
                 className="border-b border-slate-100 hover:bg-slate-50"
               >
-                <td className="px-4 py-5 font-bold text-slate-900">
+                <td className="truncate px-4 py-5 font-bold text-slate-900">
                   {item.caseNumber}
                 </td>
 
-                <td className="px-4 py-5 text-slate-700">
+                <td className="truncate px-4 py-5 text-slate-700">
                   {item.clientName}
-                </td>
-
-                <td className="px-4 py-5">
-                  <PriorityBadge priority={item.casePriority || "Standard"} />
-                </td>
-
-                <td className="px-4 py-5 text-slate-700">
-                  {item.assignedCaseManager || "Unassigned"}
-                </td>
-
-                <td className="px-4 py-5 text-slate-700">
-                  {item.assignedFieldStaff || "Unassigned"}
                 </td>
 
                 <td className="px-4 py-5">
@@ -117,10 +91,10 @@ function ActiveCasesTable() {
                 </td>
 
                 <td className="px-4 py-5">
-                  <TravelBadge isBooked={Boolean(item.travelBooked)} />
+                  <PriorityBadge priority={item.casePriority || "Standard"} />
                 </td>
 
-                <td className="px-4 py-5 text-slate-700">
+                <td className="truncate px-4 py-5 text-slate-700">
                   {formatDate(item.pickupDate)}
                 </td>
 
@@ -166,9 +140,11 @@ function ActiveCasesTable() {
   );
 }
 
-function Header({ label }: { label: string }) {
+function Header({ label, width }: { label: string; width: string }) {
   return (
-    <th className="px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-slate-500">
+    <th
+      className={`${width} px-4 py-3 text-left text-sm font-bold uppercase tracking-wide text-slate-500`}
+    >
       {label}
     </th>
   );
@@ -189,7 +165,7 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span
-      className={`rounded-lg px-3 py-1 text-sm font-bold ${
+      className={`inline-block max-w-full truncate rounded-lg px-3 py-1 text-sm font-bold ${
         styles[status] || "bg-slate-100 text-slate-700"
       }`}
     >
@@ -207,23 +183,11 @@ function PriorityBadge({ priority }: { priority: string }) {
 
   return (
     <span
-      className={`rounded-lg px-3 py-1 text-sm font-bold ${
+      className={`inline-block max-w-full truncate rounded-lg px-3 py-1 text-sm font-bold ${
         styles[priority] || "bg-slate-100 text-slate-700"
       }`}
     >
       {priority}
-    </span>
-  );
-}
-
-function TravelBadge({ isBooked }: { isBooked: boolean }) {
-  return (
-    <span
-      className={`rounded-lg px-3 py-1 text-sm font-bold ${
-        isBooked ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"
-      }`}
-    >
-      {isBooked ? "Booked" : "Pending"}
     </span>
   );
 }
@@ -238,7 +202,6 @@ function formatDate(dateValue: string) {
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    year: "numeric",
   });
 }
 

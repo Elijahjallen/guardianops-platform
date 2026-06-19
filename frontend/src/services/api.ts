@@ -27,6 +27,49 @@ type CaseData = {
   flightConfirmation?: string;
   hotelConfirmation?: string;
   casePriority?: string;
+
+  quoteAmount?: number | null;
+  quoteStatus?: string | null;
+  quoteSentDate?: string | null;
+  quoteApprovedDate?: string | null;
+
+  scheduledPickupTime?: string | null;
+  scheduledDropoffTime?: string | null;
+  departureAirport?: string | null;
+  arrivalAirport?: string | null;
+  assignedEscortId?: string | null;
+  schedulingStatus?: string | null;
+
+  flightCost?: number | null;
+  hotelCost?: number | null;
+  mealCost?: number | null;
+  groundCost?: number | null;
+  otherCost?: number | null;
+  totalExpense?: number | null;
+
+  airlineName?: string | null;
+  flightNumber?: string | null;
+  flightDeparture?: string | null;
+  flightArrival?: string | null;
+  hotelName?: string | null;
+  hotelCheckIn?: string | null;
+  hotelCheckOut?: string | null;
+  rentalCarCompany?: string | null;
+  rentalConfirmation?: string | null;
+};
+
+export type AuditLog = {
+  id: string;
+  caseId?: string | null;
+  caseNumber?: string | null;
+  action: string;
+  entityType: string;
+  entityId?: string | null;
+  description: string;
+  performedBy: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+  createdAt: string;
 };
 
 export async function getCases() {
@@ -338,5 +381,55 @@ export async function submitIntakeForm(intakeData: any) {
 
 export async function getYouthProfile(caseId: string) {
   const response = await api.get(`/intake/youth-profile/${caseId}`);
+  return response.data;
+}
+
+export async function approveQuote(caseId: string) {
+  const response = await api.put(`/cases/${caseId}/approve-quote`);
+  return response.data;
+}
+
+export async function declineQuote(caseId: string) {
+  const response = await api.put(`/cases/${caseId}/decline-quote`);
+  return response.data;
+}
+
+export async function getAuditLogs() {
+  const response = await api.get<AuditLog[]>("/audit-logs");
+  return response.data;
+}
+
+export async function getCaseAuditLogs(caseId: string) {
+  const response = await api.get<AuditLog[]>(`/audit-logs/case/${caseId}`);
+  return response.data;
+}
+
+export async function getReportCasesByStatus() {
+  const response = await api.get("/reports/cases-by-status");
+  return response.data;
+}
+
+export async function getReportQuotesByStatus() {
+  const response = await api.get("/reports/quotes-by-status");
+  return response.data;
+}
+
+export async function getReportExpensesByCategory() {
+  const response = await api.get("/reports/expenses-by-category");
+  return response.data;
+}
+
+export async function getReportRevenueByMonth() {
+  const response = await api.get("/reports/revenue-by-month");
+  return response.data;
+}
+
+export async function getReportStaffUtilization() {
+  const response = await api.get("/reports/staff-utilization");
+  return response.data;
+}
+
+export async function getReportExecutiveSummary() {
+  const response = await api.get("/reports/executive-summary");
   return response.data;
 }

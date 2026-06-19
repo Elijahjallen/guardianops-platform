@@ -19,6 +19,8 @@ import IntakeFormPage from "../pages/IntakeFormPage";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleProtectedRoute from "./RoleProtectedRoute";
 
+import AuditLogsPage from "../pages/AuditLogsPage";
+
 function AppRoutes() {
   return (
     <Routes>
@@ -151,6 +153,15 @@ function AppRoutes() {
         }
       />
 
+      <Route
+        path="/audit-logs"
+        element={
+          <RoleProtectedRoute allowedRoles={["Admin", "Office Manager"]}>
+          <AuditLogsPage />
+        </RoleProtectedRoute>
+      }
+    />
+      
       <Route
         path="/users"
         element={

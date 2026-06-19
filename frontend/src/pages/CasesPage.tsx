@@ -18,20 +18,9 @@ type ApiCase = {
   travelBooked?: boolean;
   casePriority?: string;
   createdAt: string;
+  quoteAmount?: number | null;
+  quoteStatus?: string | null;
 };
-
-type SortKey =
-  | "caseNumber"
-  | "clientName"
-  | "status"
-  | "casePriority"
-  | "assignedCaseManager"
-  | "assignedFieldStaff"
-  | "travelBooked"
-  | "destination"
-  | "pickupDate";
-
-type SortDirection = "asc" | "desc";
 
 function CasesPage() {
   const navigate = useNavigate();
@@ -41,14 +30,18 @@ function CasesPage() {
   const [isNewCaseOpen, setIsNewCaseOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
-  const [sortKey, setSortKey] = useState<SortKey>("pickupDate");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   async function loadCases() {
     try {
       setIsLoading(true);
       const data = await getCases();
-      setCases(data);
+
+      const sortedData = [...data].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      setCases(sortedData);
     } catch (error) {
       console.error("Failed to load cases:", error);
     } finally {
@@ -71,59 +64,41 @@ function CasesPage() {
     "Cancelled",
   ];
 
-  function handleSort(column: SortKey) {
-    if (sortKey === column) {
-      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
-      return;
-    }
-
-    setSortKey(column);
-    setSortDirection("asc");
-  }
-
-  const filteredAndSortedCases = useMemo(() => {
+  const filteredCases = useMemo(() => {
     const searchValue = searchText.toLowerCase();
 
-    const filtered = cases.filter((item) => {
+    return cases.filter((item) => {
       const matchesSearch =
         item.caseNumber.toLowerCase().includes(searchValue) ||
         item.clientName.toLowerCase().includes(searchValue) ||
         item.destination.toLowerCase().includes(searchValue) ||
         (item.assignedCaseManager || "").toLowerCase().includes(searchValue) ||
         (item.assignedFieldStaff || "").toLowerCase().includes(searchValue) ||
-        (item.casePriority || "").toLowerCase().includes(searchValue);
+        (item.casePriority || "").toLowerCase().includes(searchValue) ||
+        (item.quoteStatus || "").toLowerCase().includes(searchValue);
 
       const matchesFilter =
         selectedFilter === "All" || item.status === selectedFilter;
 
       return matchesSearch && matchesFilter;
     });
-
-    return [...filtered].sort((a, b) => {
-      const aValue = getSortValue(a, sortKey);
-      const bValue = getSortValue(b, sortKey);
-
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [cases, searchText, selectedFilter, sortKey, sortDirection]);
+  }, [cases, searchText, selectedFilter]);
 
   return (
     <DashboardLayout>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-4xl font-bold text-slate-950">Cases</h1>
 
           <p className="mt-2 text-slate-500">
-            Manage transport cases, assignments, statuses, travel readiness, and
-            case activity.
+            Manage case status, quotes, assignments, travel readiness, and
+            transport activity.
           </p>
         </div>
 
         <button
           onClick={() => setIsNewCaseOpen(true)}
-          className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700"
+          className="w-full rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700 xl:w-auto"
         >
           + New Case
         </button>
@@ -136,7 +111,7 @@ function CasesPage() {
               type="text"
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
-              placeholder="Search cases..."
+              placeholder="Search case number, client, destination, staff, quote status..."
               className="w-full rounded-2xl border border-slate-300 bg-white px-5 py-3 text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 xl:max-w-xl"
             />
 
@@ -154,152 +129,109 @@ function CasesPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1350px] text-left">
+        <div className="overflow-hidden">
+          <table className="w-full text-left">
             <thead className="bg-slate-50 text-sm font-bold uppercase text-slate-600">
               <tr>
-                <SortableHeader
-                  label="Case #"
-                  sortKeyValue="caseNumber"
-                  activeSortKey={sortKey}
-                  direction={sortDirection}
-                  onSort={handleSort}
-                />
-
-                <SortableHeader
-                  label="Client"
-                  sortKeyValue="clientName"
-                  activeSortKey={sortKey}
-                  direction={sortDirection}
-                  onSort={handleSort}
-                />
-
-                <SortableHeader
-                  label="Status"
-                  sortKeyValue="status"
-                  activeSortKey={sortKey}
-                  direction={sortDirection}
-                  onSort={handleSort}
-                />
-
-                <SortableHeader
-                  label="Priority"
-                  sortKeyValue="casePriority"
-                  activeSortKey={sortKey}
-                  direction={sortDirection}
-                  onSort={handleSort}
-                />
-
-                <SortableHeader
-                  label="Case Manager"
-                  sortKeyValue="assignedCaseManager"
-                  activeSortKey={sortKey}
-                  direction={sortDirection}
-                  onSort={handleSort}
-                />
-
-                <SortableHeader
-                  label="Field Staff"
-                  sortKeyValue="assignedFieldStaff"
-                  activeSortKey={sortKey}
-                  direction={sortDirection}
-                  onSort={handleSort}
-                />
-
-                <SortableHeader
-                  label="Travel"
-                  sortKeyValue="travelBooked"
-                  activeSortKey={sortKey}
-                  direction={sortDirection}
-                  onSort={handleSort}
-                />
-
-                <SortableHeader
-                  label="Destination"
-                  sortKeyValue="destination"
-                  activeSortKey={sortKey}
-                  direction={sortDirection}
-                  onSort={handleSort}
-                />
-
-                <SortableHeader
-                  label="Pickup Date"
-                  sortKeyValue="pickupDate"
-                  activeSortKey={sortKey}
-                  direction={sortDirection}
-                  onSort={handleSort}
-                />
-
-                <th className="px-6 py-4">Action</th>
+                <th className="px-6 py-4">Case</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Quote</th>
+                <th className="px-6 py-4">Assignment</th>
+                <th className="px-6 py-4">Travel</th>
+                <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
 
             <tbody>
-              {filteredAndSortedCases.map((item) => (
-                <tr
-                  key={item.id}
-                  className="border-t border-slate-100 hover:bg-slate-50"
-                >
-                  <td className="px-6 py-5 font-bold text-slate-950">
-                    {item.caseNumber}
-                  </td>
-
-                  <td className="px-6 py-5 text-slate-700">
-                    {item.clientName}
-                  </td>
-
-                  <td className="px-6 py-5">
-                    <StatusBadge status={item.status} />
-                  </td>
-
-                  <td className="px-6 py-5">
-                    <PriorityBadge priority={item.casePriority || "Standard"} />
-                  </td>
-
-                  <td className="px-6 py-5 text-slate-700">
-                    {item.assignedCaseManager || "Unassigned"}
-                  </td>
-
-                  <td className="px-6 py-5 text-slate-700">
-                    {item.assignedFieldStaff || "Unassigned"}
-                  </td>
-
-                  <td className="px-6 py-5">
-                    <TravelBadge isBooked={Boolean(item.travelBooked)} />
-                  </td>
-
-                  <td className="px-6 py-5 text-slate-700">
-                    {item.destination}
-                  </td>
-
-                  <td className="px-6 py-5 text-slate-700">
-                    {formatDate(item.pickupDate)}
-                  </td>
-
-                  <td className="px-6 py-5">
-                    <button
-                      onClick={() => navigate(`/cases/${item.id}`)}
-                      className="font-bold text-blue-600 hover:text-blue-700"
-                    >
-                      View Case
-                    </button>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-10 text-center">
+                    Loading cases from database...
                   </td>
                 </tr>
-              ))}
+              ) : filteredCases.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-10 text-center">
+                    No cases found.
+                  </td>
+                </tr>
+              ) : (
+                filteredCases.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="border-t border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="px-6 py-5 align-top">
+                      <p className="font-bold text-slate-950">
+                        {item.caseNumber}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-slate-600">
+                        {item.clientName}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        Created {formatDate(item.createdAt)}
+                      </p>
+                    </td>
+
+                    <td className="px-6 py-5 align-top">
+                      <StatusBadge status={item.status} />
+                      <div className="mt-2">
+                        <PriorityBadge
+                          priority={item.casePriority || "Standard"}
+                        />
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-5 align-top">
+                      <p className="font-bold text-slate-950">
+                        {formatCurrency(item.quoteAmount)}
+                      </p>
+                      <div className="mt-2">
+                        <QuoteStatusBadge
+                          status={item.quoteStatus || "Pending"}
+                        />
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-5 align-top">
+                      <p className="text-sm text-slate-500">Manager</p>
+                      <p className="font-semibold text-slate-800">
+                        {item.assignedCaseManager || "Unassigned"}
+                      </p>
+
+                      <p className="mt-3 text-sm text-slate-500">
+                        Field Staff
+                      </p>
+                      <p className="font-semibold text-slate-800">
+                        {item.assignedFieldStaff || "Unassigned"}
+                      </p>
+                    </td>
+
+                    <td className="px-6 py-5 align-top">
+                      <p className="font-semibold text-slate-800">
+                        {item.destination}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Pickup {formatDate(item.pickupDate)}
+                      </p>
+                      <div className="mt-2">
+                        <TravelBadge isBooked={item.travelBooked} />
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-5 text-right align-top">
+                      <button
+                        onClick={() => navigate(`/cases/${item.id}`)}
+                        className="rounded-xl border border-blue-600 px-4 py-2 font-bold text-blue-600 hover:bg-blue-50"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
-
-          {isLoading && (
-            <div className="p-8 text-center font-semibold text-slate-500">
-              Loading cases from database...
-            </div>
-          )}
-
-          {!isLoading && filteredAndSortedCases.length === 0 && (
-            <div className="p-8 text-center font-semibold text-slate-500">
-              No cases match your search or filter.
-            </div>
-          )}
         </div>
       </section>
 
@@ -310,66 +242,6 @@ function CasesPage() {
       />
     </DashboardLayout>
   );
-}
-
-function SortableHeader({
-  label,
-  sortKeyValue,
-  activeSortKey,
-  direction,
-  onSort,
-}: {
-  label: string;
-  sortKeyValue: SortKey;
-  activeSortKey: SortKey;
-  direction: SortDirection;
-  onSort: (key: SortKey) => void;
-}) {
-  const isActive = activeSortKey === sortKeyValue;
-
-  return (
-    <th className="px-6 py-4">
-      <button
-        type="button"
-        onClick={() => onSort(sortKeyValue)}
-        className="flex items-center gap-2 text-left font-bold uppercase text-slate-600 hover:text-blue-600"
-      >
-        <span>{label}</span>
-        <span className="text-xs">
-          {isActive ? (direction === "asc" ? "▲" : "▼") : "↕"}
-        </span>
-      </button>
-    </th>
-  );
-}
-
-function getSortValue(item: ApiCase, key: SortKey): string | number {
-  if (key === "pickupDate") {
-    const date = new Date(item.pickupDate);
-    return Number.isNaN(date.getTime()) ? 0 : date.getTime();
-  }
-
-  if (key === "travelBooked") {
-    return item.travelBooked ? 1 : 0;
-  }
-
-  if (key === "casePriority") {
-    const priorityRank: Record<string, number> = {
-      Urgent: 3,
-      High: 2,
-      Standard: 1,
-    };
-
-    return priorityRank[item.casePriority || "Standard"] || 0;
-  }
-
-  const value = item[key];
-
-  if (typeof value === "string") {
-    return value.toLowerCase();
-  }
-
-  return "";
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -387,8 +259,28 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span
-      className={`rounded-lg px-3 py-1 text-sm font-bold ${
+      className={`inline-flex rounded-lg px-3 py-1 text-sm font-bold ${
         styles[status] || "bg-slate-100 text-slate-700"
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function QuoteStatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    Pending: "bg-gray-100 text-gray-700",
+    Drafted: "bg-blue-100 text-blue-700",
+    Sent: "bg-yellow-100 text-yellow-700",
+    Approved: "bg-green-100 text-green-700",
+    Declined: "bg-red-100 text-red-700",
+  };
+
+  return (
+    <span
+      className={`inline-flex rounded-lg px-3 py-1 text-sm font-bold ${
+        styles[status] || "bg-gray-100 text-gray-700"
       }`}
     >
       {status}
@@ -398,15 +290,17 @@ function StatusBadge({ status }: { status: string }) {
 
 function PriorityBadge({ priority }: { priority: string }) {
   const styles: Record<string, string> = {
-    Standard: "bg-slate-100 text-slate-700",
+    Low: "bg-slate-100 text-slate-700",
+    Standard: "bg-blue-100 text-blue-700",
+    Medium: "bg-yellow-100 text-yellow-700",
     High: "bg-orange-100 text-orange-700",
     Urgent: "bg-red-100 text-red-700",
   };
 
   return (
     <span
-      className={`rounded-lg px-3 py-1 text-sm font-bold ${
-        styles[priority] || "bg-slate-100 text-slate-700"
+      className={`inline-flex rounded-lg px-3 py-1 text-sm font-bold ${
+        styles[priority] || "bg-blue-100 text-blue-700"
       }`}
     >
       {priority}
@@ -414,19 +308,23 @@ function PriorityBadge({ priority }: { priority: string }) {
   );
 }
 
-function TravelBadge({ isBooked }: { isBooked: boolean }) {
+function TravelBadge({ isBooked }: { isBooked?: boolean }) {
   return (
     <span
-      className={`rounded-lg px-3 py-1 text-sm font-bold ${
+      className={`inline-flex rounded-lg px-3 py-1 text-sm font-bold ${
         isBooked ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"
       }`}
     >
-      {isBooked ? "Booked" : "Pending"}
+      {isBooked ? "Booked" : "Not Booked"}
     </span>
   );
 }
 
-function formatDate(dateValue: string) {
+function formatDate(dateValue?: string | null) {
+  if (!dateValue) {
+    return "Not scheduled";
+  }
+
   const date = new Date(dateValue);
 
   if (Number.isNaN(date.getTime())) {
@@ -437,6 +335,18 @@ function formatDate(dateValue: string) {
     month: "short",
     day: "numeric",
     year: "numeric",
+  });
+}
+
+function formatCurrency(amount?: number | null) {
+  if (amount === null || amount === undefined) {
+    return "—";
+  }
+
+  return amount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
   });
 }
 

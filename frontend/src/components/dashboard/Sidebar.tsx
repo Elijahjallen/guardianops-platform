@@ -96,6 +96,12 @@ const menuItems: MenuItem[] = [
     allowedRoles: ["Admin", "Office Manager", "Case Manager", "HR Manager", "Client"],
   },
   {
+    title: "Audit Logs",
+    icon: ReportsIcon,
+    path: "/audit-logs",
+    allowedRoles: ["Admin", "Office Manager"],
+  },
+  {
     title: "Client Directory",
     icon: ClientDirectoryIcon,
     path: "/clients",

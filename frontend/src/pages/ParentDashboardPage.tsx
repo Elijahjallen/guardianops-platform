@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 
 import DashboardLayout from "../components/dashboard/DashboardLayout";
-import { getCaseActivity, getParentCases } from "../services/api";
+import {
+  approveQuote,
+  declineQuote,
+  getCaseActivity,
+  getParentCases,
+} from "../services/api";
 import MessagesPanel from "../components/messages/MessagesPanel";
 import CaseDocumentsPanel from "../components/documents/CaseDocumentsPanel";
 
@@ -13,6 +18,11 @@ type ParentCase = {
   destination: string;
   pickupDate: string;
   staffName?: string | null;
+
+  quoteAmount?: number | null;
+  quoteStatus?: string | null;
+  quoteSentDate?: string | null;
+  quoteApprovedDate?: string | null;
 };
 
 type CaseActivity = {
@@ -29,28 +39,73 @@ function ParentDashboardPage() {
   const [cases, setCases] = useState<ParentCase[]>([]);
   const [activities, setActivities] = useState<CaseActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isQuoteUpdating, setIsQuoteUpdating] = useState(false);
+
+  async function loadParentPortal() {
+    try {
+      setIsLoading(true);
+
+      const caseData = await getParentCases();
+      setCases(caseData);
+
+      if (caseData.length > 0) {
+        const activityData = await getCaseActivity(caseData[0].id);
+        setActivities(activityData);
+      }
+    } catch (error) {
+      console.error("Failed to load parent portal:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadParentPortal() {
-      try {
-        const caseData = await getParentCases();
-        setCases(caseData);
-
-        if (caseData.length > 0) {
-          const activityData = await getCaseActivity(caseData[0].id);
-          setActivities(activityData);
-        }
-      } catch (error) {
-        console.error("Failed to load parent portal:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
     loadParentPortal();
   }, []);
 
   const primaryCase = cases[0];
+
+  async function handleApproveQuote() {
+    if (!primaryCase) return;
+
+    const confirmed = window.confirm(
+      `Approve the quote for case ${primaryCase.caseNumber}?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsQuoteUpdating(true);
+      await approveQuote(primaryCase.id);
+      await loadParentPortal();
+    } catch (error) {
+      console.error("Failed to approve quote:", error);
+      alert("Failed to approve quote. Please try again.");
+    } finally {
+      setIsQuoteUpdating(false);
+    }
+  }
+
+  async function handleDeclineQuote() {
+    if (!primaryCase) return;
+
+    const confirmed = window.confirm(
+      `Decline the quote for case ${primaryCase.caseNumber}?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsQuoteUpdating(true);
+      await declineQuote(primaryCase.id);
+      await loadParentPortal();
+    } catch (error) {
+      console.error("Failed to decline quote:", error);
+      alert("Failed to decline quote. Please try again.");
+    } finally {
+      setIsQuoteUpdating(false);
+    }
+  }
 
   return (
     <DashboardLayout>
@@ -58,7 +113,8 @@ function ParentDashboardPage() {
         <h1 className="text-4xl font-bold text-slate-950">Parent Portal</h1>
 
         <p className="mt-2 text-slate-500">
-          View transport case status, assigned escort, and real-time case updates.
+          View transport case status, assigned escort, quote details, and
+          real-time case updates.
         </p>
       </div>
 
@@ -113,6 +169,67 @@ function ParentDashboardPage() {
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-950">
+                    Quote Information
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Review the current quote and approve or decline when ready.
+                  </p>
+                </div>
+
+                <QuoteStatusBadge status={primaryCase.quoteStatus || "Pending"} />
+              </div>
+
+              <div className="mt-8 grid gap-6 md:grid-cols-2">
+                <Detail
+                  label="Quote Amount"
+                  value={formatCurrency(primaryCase.quoteAmount)}
+                />
+                <Detail
+                  label="Quote Status"
+                  value={primaryCase.quoteStatus || "Pending"}
+                />
+                <Detail
+                  label="Quote Sent Date"
+                  value={formatDate(primaryCase.quoteSentDate)}
+                />
+                <Detail
+                  label="Quote Approved Date"
+                  value={formatDate(primaryCase.quoteApprovedDate)}
+                />
+              </div>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={handleApproveQuote}
+                  disabled={
+                    isQuoteUpdating ||
+                    primaryCase.quoteStatus === "Approved" ||
+                    primaryCase.quoteStatus === "Declined"
+                  }
+                  className="rounded-xl bg-green-600 px-6 py-3 font-bold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  {isQuoteUpdating ? "Updating..." : "Approve Quote"}
+                </button>
+
+                <button
+                  onClick={handleDeclineQuote}
+                  disabled={
+                    isQuoteUpdating ||
+                    primaryCase.quoteStatus === "Approved" ||
+                    primaryCase.quoteStatus === "Declined"
+                  }
+                  className="rounded-xl border border-red-500 px-6 py-3 font-bold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400"
+                >
+                  Decline Quote
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
               <h2 className="text-2xl font-bold text-slate-950">
                 Live Case Updates
               </h2>
@@ -152,6 +269,7 @@ function ParentDashboardPage() {
                     <tr>
                       <th className="px-5 py-4">Case #</th>
                       <th className="px-5 py-4">Status</th>
+                      <th className="px-5 py-4">Quote</th>
                       <th className="px-5 py-4">Destination</th>
                       <th className="px-5 py-4">Pickup</th>
                     </tr>
@@ -169,6 +287,17 @@ function ParentDashboardPage() {
 
                         <td className="px-5 py-4">
                           <StatusBadge status={caseItem.status} />
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <p className="font-bold text-slate-950">
+                            {formatCurrency(caseItem.quoteAmount)}
+                          </p>
+                          <div className="mt-2">
+                            <QuoteStatusBadge
+                              status={caseItem.quoteStatus || "Pending"}
+                            />
+                          </div>
                         </td>
 
                         <td className="px-5 py-4 text-slate-700">
@@ -198,8 +327,8 @@ function ParentDashboardPage() {
             <MessagesPanel caseId={primaryCase.id} />
 
             <CaseDocumentsPanel
-                caseId={primaryCase.id}
-                caseNumber={primaryCase.caseNumber}
+              caseId={primaryCase.id}
+              caseNumber={primaryCase.caseNumber}
             />
           </aside>
         </div>
@@ -279,7 +408,31 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function formatDate(dateValue: string) {
+function QuoteStatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    Pending: "bg-gray-100 text-gray-700",
+    Drafted: "bg-blue-100 text-blue-700",
+    Sent: "bg-yellow-100 text-yellow-700",
+    Approved: "bg-green-100 text-green-700",
+    Declined: "bg-red-100 text-red-700",
+  };
+
+  return (
+    <span
+      className={`inline-flex rounded-lg px-3 py-1 text-sm font-bold ${
+        styles[status] || "bg-gray-100 text-gray-700"
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function formatDate(dateValue?: string | null) {
+  if (!dateValue) {
+    return "—";
+  }
+
   const date = new Date(dateValue);
 
   if (Number.isNaN(date.getTime())) {
@@ -305,6 +458,18 @@ function formatDateTime(dateValue: string) {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+  });
+}
+
+function formatCurrency(amount?: number | null) {
+  if (amount === null || amount === undefined) {
+    return "—";
+  }
+
+  return amount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
   });
 }
 
