@@ -6,12 +6,12 @@ import { AuthRequest, requireAuth } from "../middleware/authMiddleware";
 const router = Router();
 const prisma = new PrismaClient();
 
-router.get("/:caseId", requireAuth, async (req: AuthRequest, res) => {
+router.get("/:caseId", async (req, res) => {
   try {
     const activities = await prisma.caseActivity.findMany({
       where: {
-  caseId: String(req.params.caseId),
-},
+        caseId: String(req.params.caseId),
+      },
       orderBy: {
         createdAt: "desc",
       },

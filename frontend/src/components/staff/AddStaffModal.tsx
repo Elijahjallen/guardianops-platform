@@ -18,7 +18,6 @@ const staffRoles = [
 const staffStatuses = ["Available", "En Route", "Busy", "Off Duty", "Inactive"];
 
 function AddStaffModal({ isOpen, onClose, onStaffCreated }: AddStaffModalProps) {
-  const [employeeId, setEmployeeId] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState("Field Staff");
   const [status, setStatus] = useState("Available");
@@ -29,12 +28,26 @@ function AddStaffModal({ isOpen, onClose, onStaffCreated }: AddStaffModalProps) 
 
   if (!isOpen) return null;
 
+  function resetForm() {
+    setName("");
+    setRole("Field Staff");
+    setStatus("Available");
+    setPhone("");
+    setEmail("");
+    setHomeAirport("");
+    setErrorMessage("");
+  }
+
   async function handleAddStaff() {
     setErrorMessage("");
 
+    if (!name || !role || !status || !phone || !email || !homeAirport) {
+      setErrorMessage("Please complete all fields before adding an employee.");
+      return;
+    }
+
     try {
       await createStaff({
-        employeeId,
         name,
         role,
         status,
@@ -43,19 +56,14 @@ function AddStaffModal({ isOpen, onClose, onStaffCreated }: AddStaffModalProps) 
         homeAirport,
       });
 
-      setEmployeeId("");
-      setName("");
-      setRole("Field Staff");
-      setStatus("Available");
-      setPhone("");
-      setEmail("");
-      setHomeAirport("");
-
+      resetForm();
       onStaffCreated?.();
       onClose();
     } catch (error) {
       console.error("Failed to create employee:", error);
-      setErrorMessage("Failed to create employee. Check backend server.");
+      setErrorMessage(
+        "Failed to create employee. Check backend server or duplicate email."
+      );
     }
   }
 
@@ -64,6 +72,11 @@ function AddStaffModal({ isOpen, onClose, onStaffCreated }: AddStaffModalProps) 
       <div className="w-full max-w-3xl rounded-3xl bg-white p-8 shadow-2xl">
         <h2 className="text-3xl font-bold text-slate-950">Add Employee</h2>
 
+        <p className="mt-2 text-sm font-semibold text-slate-500">
+          Employee ID will be automatically assigned after the employee is
+          created.
+        </p>
+
         {errorMessage && (
           <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700">
             {errorMessage}
@@ -71,13 +84,6 @@ function AddStaffModal({ isOpen, onClose, onStaffCreated }: AddStaffModalProps) 
         )}
 
         <div className="mt-6 grid gap-5 md:grid-cols-2">
-          <Field
-            label="Employee ID"
-            value={employeeId}
-            onChange={setEmployeeId}
-            placeholder="EMP-003"
-          />
-
           <Field label="Full Name" value={name} onChange={setName} />
 
           <Select
@@ -95,19 +101,23 @@ function AddStaffModal({ isOpen, onClose, onStaffCreated }: AddStaffModalProps) 
           />
 
           <Field label="Phone" value={phone} onChange={setPhone} />
+
           <Field label="Email" value={email} onChange={setEmail} />
 
           <Field
             label="Home Airport"
             value={homeAirport}
-            onChange={setHomeAirport}
+            onChange={(value) => setHomeAirport(value.toUpperCase())}
             placeholder="BOI"
           />
         </div>
 
         <div className="mt-8 flex justify-end gap-4">
           <button
-            onClick={onClose}
+            onClick={() => {
+              resetForm();
+              onClose();
+            }}
             className="rounded-xl border border-slate-300 px-6 py-3 font-bold text-slate-700"
           >
             Cancel

@@ -5,15 +5,11 @@ import GuardianLogo from "../../assets/logos/Guardian-Ops-Logo.png";
 import HomeIcon from "../../assets/icons/Home-Icon-White.svg";
 import CasesIcon from "../../assets/icons/Cases-Icon-White.svg";
 import IntakeIcon from "../../assets/icons/Intake-Icon-White.svg";
-import QuotesIcon from "../../assets/icons/Quotes-Icon-White.svg";
-import ExpensesIcon from "../../assets/icons/Expenses-Icon-White.svg";
 import SchedulingIcon from "../../assets/icons/Scheduling-Icon-White.svg";
 import FieldStaffIcon from "../../assets/icons/Fieldstaff-icon-white.svg";
 import NotificationsIcon from "../../assets/icons/Notifications-Icon-White.svg";
 import ReportsIcon from "../../assets/icons/Reports-Icon-White.svg";
 import ClientDirectoryIcon from "../../assets/icons/Client-Directory-White.svg";
-import SettingsIcon from "../../assets/icons/Settings-Icon-White.svg";
-import SupportIcon from "../../assets/icons/Support-Icon-White.svg";
 
 type MenuItem = {
   title: string;
@@ -47,19 +43,7 @@ const menuItems: MenuItem[] = [
   {
     title: "Intake Forms",
     icon: IntakeIcon,
-    path: "/intake-forms",
-    allowedRoles: ["Admin", "Office Manager", "Case Manager"],
-  },
-  {
-    title: "Quotes",
-    icon: QuotesIcon,
-    path: "/quotes",
-    allowedRoles: ["Admin", "Office Manager", "Case Manager"],
-  },
-  {
-    title: "Expenses",
-    icon: ExpensesIcon,
-    path: "/expenses",
+    path: "/dashboard/intake",
     allowedRoles: ["Admin", "Office Manager", "Case Manager"],
   },
   {
@@ -106,26 +90,6 @@ const menuItems: MenuItem[] = [
     icon: ClientDirectoryIcon,
     path: "/clients",
     allowedRoles: ["Admin", "Office Manager", "Case Manager", "Client"],
-  },
-  {
-    title: "Settings",
-    icon: SettingsIcon,
-    path: "/settings",
-    allowedRoles: ["Admin"],
-  },
-  {
-    title: "Support",
-    icon: SupportIcon,
-    path: "/support",
-    allowedRoles: [
-      "Admin",
-      "Office Manager",
-      "Case Manager",
-      "Field Staff",
-      "HR Manager",
-      "Parent",
-      "Client",
-    ],
   },
 ];
 
@@ -182,6 +146,7 @@ function Sidebar() {
             <NavLink
               key={item.title}
               to={item.path}
+              end={item.path === "/dashboard"}
               className={({ isActive }) =>
                 `flex w-full items-center rounded-xl px-5 py-3 transition-all ${
                   isActive

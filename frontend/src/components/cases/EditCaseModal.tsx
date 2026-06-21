@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { getStaff, updateCase } from "../../services/api";
+import {
+  getStaff,
+  getYouthProfile,
+  updateCase,
+  updateYouthProfile,
+} from "../../services/api";
 
 type ApiCase = {
   id: string;
@@ -18,19 +23,16 @@ type ApiCase = {
   flightConfirmation?: string | null;
   hotelConfirmation?: string | null;
   casePriority?: string;
-
   quoteAmount?: number | null;
   quoteStatus?: string | null;
   quoteSentDate?: string | null;
   quoteApprovedDate?: string | null;
-
   scheduledPickupTime?: string | null;
   scheduledDropoffTime?: string | null;
   departureAirport?: string | null;
   arrivalAirport?: string | null;
   assignedEscortId?: string | null;
   schedulingStatus?: string | null;
-
   airlineName?: string | null;
   flightNumber?: string | null;
   flightDeparture?: string | null;
@@ -40,13 +42,11 @@ type ApiCase = {
   hotelCheckOut?: string | null;
   rentalCarCompany?: string | null;
   rentalConfirmation?: string | null;
-
   flightCost?: number | null;
   hotelCost?: number | null;
   mealCost?: number | null;
   groundCost?: number | null;
   otherCost?: number | null;
-  totalExpense?: number | null;
 };
 
 type StaffMember = {
@@ -112,6 +112,34 @@ function EditCaseModal({
   const [groundCost, setGroundCost] = useState("");
   const [otherCost, setOtherCost] = useState("");
 
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [preferredName, setPreferredName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [gender, setGender] = useState("");
+  const [identifiesNonBinary, setIdentifiesNonBinary] = useState(false);
+  const [identifiesTransgender, setIdentifiesTransgender] = useState(false);
+  const [pronouns, setPronouns] = useState("");
+  const [autismSpectrumDisorder, setAutismSpectrumDisorder] = useState(false);
+  const [autismSpectrumLevel, setAutismSpectrumLevel] = useState("");
+  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState("");
+  const [hairColor, setHairColor] = useState("");
+  const [eyeColor, setEyeColor] = useState("");
+  const [marks, setMarks] = useState("");
+  const [likes, setLikes] = useState("");
+  const [dislikes, setDislikes] = useState("");
+  const [participatingBehavior, setParticipatingBehavior] = useState("");
+  const [impulsiveBehavior, setImpulsiveBehavior] = useState("");
+  const [siblingsInHome, setSiblingsInHome] = useState("");
+  const [familyDynamics, setFamilyDynamics] = useState("");
+  const [bedroomLayout, setBedroomLayout] = useState("");
+  const [sportsOrHobbies, setSportsOrHobbies] = useState("");
+  const [athleticLevel, setAthleticLevel] = useState("");
+  const [custody, setCustody] = useState("");
+  const [biologicalOrAdopted, setBiologicalOrAdopted] = useState("");
+
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [message, setMessage] = useState("");
 
@@ -131,12 +159,60 @@ function EditCaseModal({
   }, [isOpen]);
 
   useEffect(() => {
+    async function loadYouthProfile() {
+      if (!caseItem?.id) return;
+
+      try {
+        const profile = await getYouthProfile(caseItem.id);
+
+        setFirstName(profile.firstName || "");
+        setMiddleName(profile.middleName || "");
+        setLastName(profile.lastName || "");
+        setPreferredName(profile.preferredName || "");
+        setDateOfBirth(formatInputDate(profile.dateOfBirth || ""));
+        setGender(profile.gender || "");
+        setIdentifiesNonBinary(Boolean(profile.identifiesNonBinary));
+        setIdentifiesTransgender(Boolean(profile.identifiesTransgender));
+        setPronouns(profile.pronouns || "");
+        setAutismSpectrumDisorder(Boolean(profile.autismSpectrumDisorder));
+        setAutismSpectrumLevel(profile.autismSpectrumLevel || "");
+        setHeight(profile.height || "");
+        setWeight(profile.weight || "");
+        setHairColor(profile.hairColor || "");
+        setEyeColor(profile.eyeColor || "");
+        setMarks(profile.marks || "");
+        setLikes(profile.likes || "");
+        setDislikes(profile.dislikes || "");
+        setParticipatingBehavior(profile.participatingBehavior || "");
+        setImpulsiveBehavior(profile.impulsiveBehavior || "");
+        setSiblingsInHome(profile.siblingsInHome || "");
+        setFamilyDynamics(profile.familyDynamics || "");
+        setBedroomLayout(profile.bedroomLayout || "");
+        setSportsOrHobbies(profile.sportsOrHobbies || "");
+        setAthleticLevel(profile.athleticLevel || "");
+        setCustody(profile.custody || "");
+        setBiologicalOrAdopted(profile.biologicalOrAdopted || "");
+      } catch {
+        setFirstName("");
+        setMiddleName("");
+        setLastName("");
+        setPreferredName("");
+        setDateOfBirth("");
+        setGender("");
+      }
+    }
+
+    if (isOpen && caseItem) {
+      loadYouthProfile();
+    }
+  }, [isOpen, caseItem]);
+
+  useEffect(() => {
     if (caseItem) {
       setClientName(caseItem.clientName);
       setStatus(caseItem.status);
       setDestination(caseItem.destination);
       setPickupDate(formatInputDate(caseItem.pickupDate));
-
       setAssignedCaseManager(caseItem.assignedCaseManager || "");
       setAssignedFieldStaff(caseItem.assignedFieldStaff || "");
       setTransportDate(formatInputDate(caseItem.transportDate || ""));
@@ -146,23 +222,16 @@ function EditCaseModal({
       setFlightConfirmation(caseItem.flightConfirmation || "");
       setHotelConfirmation(caseItem.hotelConfirmation || "");
       setCasePriority(caseItem.casePriority || "Standard");
-
       setQuoteAmount(caseItem.quoteAmount?.toString() || "");
       setQuoteStatus(caseItem.quoteStatus || "Pending");
       setQuoteSentDate(formatInputDate(caseItem.quoteSentDate || ""));
       setQuoteApprovedDate(formatInputDate(caseItem.quoteApprovedDate || ""));
-
-      setScheduledPickupTime(
-        formatInputDateTime(caseItem.scheduledPickupTime || "")
-      );
-      setScheduledDropoffTime(
-        formatInputDateTime(caseItem.scheduledDropoffTime || "")
-      );
+      setScheduledPickupTime(formatInputDateTime(caseItem.scheduledPickupTime || ""));
+      setScheduledDropoffTime(formatInputDateTime(caseItem.scheduledDropoffTime || ""));
       setDepartureAirport(caseItem.departureAirport || "");
       setArrivalAirport(caseItem.arrivalAirport || "");
       setAssignedEscortId(caseItem.assignedEscortId || "");
       setSchedulingStatus(caseItem.schedulingStatus || "Not Scheduled");
-
       setAirlineName(caseItem.airlineName || "");
       setFlightNumber(caseItem.flightNumber || "");
       setFlightDeparture(formatInputDateTime(caseItem.flightDeparture || ""));
@@ -172,7 +241,6 @@ function EditCaseModal({
       setHotelCheckOut(formatInputDate(caseItem.hotelCheckOut || ""));
       setRentalCarCompany(caseItem.rentalCarCompany || "");
       setRentalConfirmation(caseItem.rentalConfirmation || "");
-
       setFlightCost(caseItem.flightCost?.toString() || "");
       setHotelCost(caseItem.hotelCost?.toString() || "");
       setMealCost(caseItem.mealCost?.toString() || "");
@@ -188,7 +256,10 @@ function EditCaseModal({
   );
 
   const fieldStaff = staffList.filter(
-    (staff) => staff.role === "Field Staff" && staff.status !== "Inactive"
+    (staff) =>
+      (staff.role === "Field Staff" ||
+        staff.role === "Field Transport Specialist") &&
+      staff.status !== "Inactive"
   );
 
   async function handleSave() {
@@ -204,7 +275,6 @@ function EditCaseModal({
         destination,
         pickupDate,
         staffName: undefined,
-
         assignedCaseManager: assignedCaseManager || undefined,
         assignedFieldStaff: assignedFieldStaff || undefined,
         transportDate: transportDate || undefined,
@@ -214,19 +284,16 @@ function EditCaseModal({
         flightConfirmation: flightConfirmation || undefined,
         hotelConfirmation: hotelConfirmation || undefined,
         casePriority,
-
         quoteAmount: quoteAmount ? Number(quoteAmount) : undefined,
         quoteStatus,
         quoteSentDate: quoteSentDate || undefined,
         quoteApprovedDate: quoteApprovedDate || undefined,
-
         scheduledPickupTime: scheduledPickupTime || undefined,
         scheduledDropoffTime: scheduledDropoffTime || undefined,
         departureAirport: departureAirport || undefined,
         arrivalAirport: arrivalAirport || undefined,
         assignedEscortId: assignedEscortId || undefined,
         schedulingStatus,
-
         airlineName: airlineName || undefined,
         flightNumber: flightNumber || undefined,
         flightDeparture: flightDeparture || undefined,
@@ -236,7 +303,6 @@ function EditCaseModal({
         hotelCheckOut: hotelCheckOut || undefined,
         rentalCarCompany: rentalCarCompany || undefined,
         rentalConfirmation: rentalConfirmation || undefined,
-
         flightCost: flightCost ? Number(flightCost) : undefined,
         hotelCost: hotelCost ? Number(hotelCost) : undefined,
         mealCost: mealCost ? Number(mealCost) : undefined,
@@ -244,18 +310,50 @@ function EditCaseModal({
         otherCost: otherCost ? Number(otherCost) : undefined,
       });
 
+      if (firstName && lastName && dateOfBirth && gender) {
+        await updateYouthProfile(caseItem.id, {
+          firstName,
+          middleName,
+          lastName,
+          preferredName,
+          dateOfBirth,
+          gender,
+          identifiesNonBinary,
+          identifiesTransgender,
+          pronouns,
+          autismSpectrumDisorder,
+          autismSpectrumLevel,
+          height,
+          weight,
+          hairColor,
+          eyeColor,
+          marks,
+          likes,
+          dislikes,
+          participatingBehavior,
+          impulsiveBehavior,
+          siblingsInHome,
+          familyDynamics,
+          bedroomLayout,
+          sportsOrHobbies,
+          athleticLevel,
+          custody,
+          biologicalOrAdopted,
+        });
+      }
+
       onCaseUpdated();
       onClose();
     } catch (error) {
       console.error("Failed to update case:", error);
-      setMessage("Failed to update case.");
+      setMessage("Failed to update case or youth profile.");
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/60 px-4 py-8">
-      <div className="w-full max-w-5xl rounded-3xl bg-white p-8 shadow-2xl">
-        <div className="mb-6 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 px-4 py-8">
+      <div className="mx-auto w-full max-w-5xl rounded-3xl bg-white p-8 shadow-2xl">
+        <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-3xl font-bold text-slate-950">Review Case</h2>
             <p className="mt-1 text-slate-500">
@@ -283,11 +381,7 @@ function EditCaseModal({
 
           <ReadOnlyField label="Case Number" value={caseItem.caseNumber} />
 
-          <Field
-            label="Client Name"
-            value={clientName}
-            onChange={setClientName}
-          />
+          <Field label="Client Name" value={clientName} onChange={setClientName} />
 
           <Select
             label="Status"
@@ -327,37 +421,11 @@ function EditCaseModal({
             placeholder="Select field staff"
           />
 
-          <Field
-            label="Pickup Date"
-            type="date"
-            value={pickupDate}
-            onChange={setPickupDate}
-          />
-
-          <Field
-            label="Transport Date"
-            type="date"
-            value={transportDate}
-            onChange={setTransportDate}
-          />
-
-          <Field
-            label="Pickup Location"
-            value={pickupLocation}
-            onChange={setPickupLocation}
-          />
-
-          <Field
-            label="Destination Location"
-            value={destinationLocation}
-            onChange={setDestinationLocation}
-          />
-
-          <Field
-            label="Destination"
-            value={destination}
-            onChange={setDestination}
-          />
+          <Field label="Pickup Date" type="date" value={pickupDate} onChange={setPickupDate} />
+          <Field label="Transport Date" type="date" value={transportDate} onChange={setTransportDate} />
+          <Field label="Pickup Location" value={pickupLocation} onChange={setPickupLocation} />
+          <Field label="Destination Location" value={destinationLocation} onChange={setDestinationLocation} />
+          <Field label="Destination" value={destination} onChange={setDestination} />
 
           <Select
             label="Travel Booked"
@@ -366,26 +434,62 @@ function EditCaseModal({
             options={["No", "Yes"]}
           />
 
-          <Field
-            label="Flight Confirmation"
-            value={flightConfirmation}
-            onChange={setFlightConfirmation}
+          <Field label="Flight Confirmation" value={flightConfirmation} onChange={setFlightConfirmation} />
+          <Field label="Hotel Confirmation" value={hotelConfirmation} onChange={setHotelConfirmation} />
+
+          <SectionTitle title="Youth Profile" />
+
+          <Field label="First Name" value={firstName} onChange={setFirstName} />
+          <Field label="Middle Name" value={middleName} onChange={setMiddleName} />
+          <Field label="Last Name" value={lastName} onChange={setLastName} />
+          <Field label="Preferred Name" value={preferredName} onChange={setPreferredName} />
+          <Field label="Date of Birth" type="date" value={dateOfBirth} onChange={setDateOfBirth} />
+          <Field label="Gender" value={gender} onChange={setGender} />
+
+          <Select
+            label="Identifies Non-Binary"
+            value={identifiesNonBinary ? "Yes" : "No"}
+            onChange={(value) => setIdentifiesNonBinary(value === "Yes")}
+            options={["No", "Yes"]}
           />
 
-          <Field
-            label="Hotel Confirmation"
-            value={hotelConfirmation}
-            onChange={setHotelConfirmation}
+          <Select
+            label="Identifies Transgender"
+            value={identifiesTransgender ? "Yes" : "No"}
+            onChange={(value) => setIdentifiesTransgender(value === "Yes")}
+            options={["No", "Yes"]}
           />
+
+          <Field label="Pronouns" value={pronouns} onChange={setPronouns} />
+
+          <Select
+            label="Autism Spectrum Disorder"
+            value={autismSpectrumDisorder ? "Yes" : "No"}
+            onChange={(value) => setAutismSpectrumDisorder(value === "Yes")}
+            options={["No", "Yes"]}
+          />
+
+          <Field label="Autism Spectrum Level" value={autismSpectrumLevel} onChange={setAutismSpectrumLevel} />
+          <Field label="Height" value={height} onChange={setHeight} />
+          <Field label="Weight" value={weight} onChange={setWeight} />
+          <Field label="Hair Color" value={hairColor} onChange={setHairColor} />
+          <Field label="Eye Color" value={eyeColor} onChange={setEyeColor} />
+          <TextArea label="Marks / Identifiers" value={marks} onChange={setMarks} />
+          <TextArea label="Likes" value={likes} onChange={setLikes} />
+          <TextArea label="Dislikes" value={dislikes} onChange={setDislikes} />
+          <TextArea label="Participating Behavior" value={participatingBehavior} onChange={setParticipatingBehavior} />
+          <TextArea label="Impulsive Behavior" value={impulsiveBehavior} onChange={setImpulsiveBehavior} />
+          <TextArea label="Siblings in Home" value={siblingsInHome} onChange={setSiblingsInHome} />
+          <TextArea label="Family Dynamics" value={familyDynamics} onChange={setFamilyDynamics} />
+          <TextArea label="Bedroom Layout" value={bedroomLayout} onChange={setBedroomLayout} />
+          <TextArea label="Sports or Hobbies" value={sportsOrHobbies} onChange={setSportsOrHobbies} />
+          <Field label="Athletic Level" value={athleticLevel} onChange={setAthleticLevel} />
+          <TextArea label="Custody" value={custody} onChange={setCustody} />
+          <Field label="Biological or Adopted" value={biologicalOrAdopted} onChange={setBiologicalOrAdopted} />
 
           <SectionTitle title="Quote Management" />
 
-          <Field
-            label="Quote Amount"
-            type="number"
-            value={quoteAmount}
-            onChange={setQuoteAmount}
-          />
+          <Field label="Quote Amount" type="number" value={quoteAmount} onChange={setQuoteAmount} />
 
           <Select
             label="Quote Status"
@@ -394,19 +498,8 @@ function EditCaseModal({
             options={["Pending", "Drafted", "Sent", "Approved", "Declined"]}
           />
 
-          <Field
-            label="Quote Sent Date"
-            type="date"
-            value={quoteSentDate}
-            onChange={setQuoteSentDate}
-          />
-
-          <Field
-            label="Quote Approved Date"
-            type="date"
-            value={quoteApprovedDate}
-            onChange={setQuoteApprovedDate}
-          />
+          <Field label="Quote Sent Date" type="date" value={quoteSentDate} onChange={setQuoteSentDate} />
+          <Field label="Quote Approved Date" type="date" value={quoteApprovedDate} onChange={setQuoteApprovedDate} />
 
           <SectionTitle title="Scheduling" />
 
@@ -433,127 +526,33 @@ function EditCaseModal({
             placeholder="Select escort"
           />
 
-          <Field
-            label="Scheduled Pickup Time"
-            type="datetime-local"
-            value={scheduledPickupTime}
-            onChange={setScheduledPickupTime}
-          />
-
-          <Field
-            label="Scheduled Dropoff Time"
-            type="datetime-local"
-            value={scheduledDropoffTime}
-            onChange={setScheduledDropoffTime}
-          />
-
-          <Field
-            label="Departure Airport"
-            value={departureAirport}
-            onChange={setDepartureAirport}
-          />
-
-          <Field
-            label="Arrival Airport"
-            value={arrivalAirport}
-            onChange={setArrivalAirport}
-          />
+          <Field label="Scheduled Pickup Time" type="datetime-local" value={scheduledPickupTime} onChange={setScheduledPickupTime} />
+          <Field label="Scheduled Dropoff Time" type="datetime-local" value={scheduledDropoffTime} onChange={setScheduledDropoffTime} />
+          <Field label="Departure Airport" value={departureAirport} onChange={setDepartureAirport} />
+          <Field label="Arrival Airport" value={arrivalAirport} onChange={setArrivalAirport} />
 
           <SectionTitle title="Travel Booking Tracker" />
 
-          <Field
-            label="Airline"
-            value={airlineName}
-            onChange={setAirlineName}
-          />
-
-          <Field
-            label="Flight Number"
-            value={flightNumber}
-            onChange={setFlightNumber}
-          />
-
-          <Field
-            label="Flight Departure"
-            type="datetime-local"
-            value={flightDeparture}
-            onChange={setFlightDeparture}
-          />
-
-          <Field
-            label="Flight Arrival"
-            type="datetime-local"
-            value={flightArrival}
-            onChange={setFlightArrival}
-          />
-
+          <Field label="Airline" value={airlineName} onChange={setAirlineName} />
+          <Field label="Flight Number" value={flightNumber} onChange={setFlightNumber} />
+          <Field label="Flight Departure" type="datetime-local" value={flightDeparture} onChange={setFlightDeparture} />
+          <Field label="Flight Arrival" type="datetime-local" value={flightArrival} onChange={setFlightArrival} />
           <Field label="Hotel Name" value={hotelName} onChange={setHotelName} />
-
-          <Field
-            label="Hotel Check-In"
-            type="date"
-            value={hotelCheckIn}
-            onChange={setHotelCheckIn}
-          />
-
-          <Field
-            label="Hotel Check-Out"
-            type="date"
-            value={hotelCheckOut}
-            onChange={setHotelCheckOut}
-          />
-
-          <Field
-            label="Rental Car Company"
-            value={rentalCarCompany}
-            onChange={setRentalCarCompany}
-          />
-
-          <Field
-            label="Rental Confirmation"
-            value={rentalConfirmation}
-            onChange={setRentalConfirmation}
-          />
+          <Field label="Hotel Check-In" type="date" value={hotelCheckIn} onChange={setHotelCheckIn} />
+          <Field label="Hotel Check-Out" type="date" value={hotelCheckOut} onChange={setHotelCheckOut} />
+          <Field label="Rental Car Company" value={rentalCarCompany} onChange={setRentalCarCompany} />
+          <Field label="Rental Confirmation" value={rentalConfirmation} onChange={setRentalConfirmation} />
 
           <SectionTitle title="Expense Tracking" />
 
-          <Field
-            label="Flight Cost"
-            type="number"
-            value={flightCost}
-            onChange={setFlightCost}
-          />
-
-          <Field
-            label="Hotel Cost"
-            type="number"
-            value={hotelCost}
-            onChange={setHotelCost}
-          />
-
-          <Field
-            label="Meal Cost"
-            type="number"
-            value={mealCost}
-            onChange={setMealCost}
-          />
-
-          <Field
-            label="Ground Transportation Cost"
-            type="number"
-            value={groundCost}
-            onChange={setGroundCost}
-          />
-
-          <Field
-            label="Other Cost"
-            type="number"
-            value={otherCost}
-            onChange={setOtherCost}
-          />
+          <Field label="Flight Cost" type="number" value={flightCost} onChange={setFlightCost} />
+          <Field label="Hotel Cost" type="number" value={hotelCost} onChange={setHotelCost} />
+          <Field label="Meal Cost" type="number" value={mealCost} onChange={setMealCost} />
+          <Field label="Ground Transportation Cost" type="number" value={groundCost} onChange={setGroundCost} />
+          <Field label="Other Cost" type="number" value={otherCost} onChange={setOtherCost} />
         </div>
 
-        <div className="mt-8 flex justify-end gap-4">
+        <div className="sticky bottom-0 mt-8 flex justify-end gap-4 border-t border-slate-200 bg-white pt-5">
           <button
             onClick={onClose}
             className="rounded-xl border border-slate-300 px-6 py-3 font-bold text-slate-700 hover:bg-slate-50"
@@ -585,7 +584,6 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <label className="mb-2 block font-bold text-slate-950">{label}</label>
-
       <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-semibold text-slate-700">
         {value || "Not provided"}
       </div>
@@ -611,6 +609,28 @@ function Field({
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
+      />
+    </div>
+  );
+}
+
+function TextArea({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="md:col-span-2">
+      <label className="mb-2 block font-bold text-slate-950">{label}</label>
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        rows={3}
         className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
       />
     </div>
@@ -652,25 +672,15 @@ function Select({
 
 function formatInputDate(value?: string | null) {
   if (!value) return "";
-
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
+  if (Number.isNaN(date.getTime())) return "";
   return date.toISOString().split("T")[0];
 }
 
 function formatInputDateTime(value?: string | null) {
   if (!value) return "";
-
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
+  if (Number.isNaN(date.getTime())) return "";
   return date.toISOString().slice(0, 16);
 }
 

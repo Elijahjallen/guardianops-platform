@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import HeroPanel from "../components/HeroPanel";
 import { login as loginUser } from "../services/api";
@@ -38,7 +38,15 @@ function LoginPage() {
       const data = await loginUser(email, password);
       const userRole = data.user.role;
 
-      const employeeRoles = ["Admin", "Employee", "Case Manager", "Field Staff"];
+      const employeeRoles = [
+        "Admin",
+        "Employee",
+        "Case Manager",
+        "Field Staff",
+        "Office Manager",
+        "HR Manager",
+      ];
+
       const parentRoles = ["Parent", "Client"];
 
       const isEmployeeLogin =
@@ -202,6 +210,19 @@ function LoginPage() {
                   Contact your Administrator
                 </button>
               </p>
+
+              <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-center">
+                <p className="font-semibold text-slate-700">
+                  Need transport services or a new quote?
+                </p>
+
+                <Link
+                  to="/intake"
+                  className="mt-2 inline-block text-lg font-bold text-blue-600 hover:text-blue-700"
+                >
+                  Request a Quote
+                </Link>
+              </div>
             </form>
           </div>
         </section>
@@ -260,4 +281,4 @@ function RoleButton({
   );
 }
 
-export default LoginPage; 
+export default LoginPage;

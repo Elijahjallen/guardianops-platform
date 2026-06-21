@@ -20,6 +20,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import RoleProtectedRoute from "./RoleProtectedRoute";
 
 import AuditLogsPage from "../pages/AuditLogsPage";
+import InternalIntakePage from "../pages/InternalIntakePage";
 
 function AppRoutes() {
   return (
@@ -49,7 +50,7 @@ function AppRoutes() {
       />
 
       <Route
-        path="/cases/:caseId"
+        path="/cases/:Id"
         element={
           <RoleProtectedRoute
             allowedRoles={["Admin", "Office Manager", "Case Manager", "Field Staff"]}
@@ -141,6 +142,17 @@ function AppRoutes() {
           </RoleProtectedRoute>
         }
       />
+
+      <Route
+        path="/dashboard/intake"
+        element={
+          <RoleProtectedRoute
+            allowedRoles={["Admin", "Office Manager", "Case Manager"]}
+          >
+            <InternalIntakePage />
+          </RoleProtectedRoute>
+      }
+    />
 
       <Route
         path="/scheduling"

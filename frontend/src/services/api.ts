@@ -1,10 +1,7 @@
 import axios from "axios";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5001/api";
-
 export const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: "http://localhost:5001/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -97,10 +94,10 @@ export async function createCase(caseData: CaseData) {
   return response.data;
 }
 
-export async function getCaseById(caseId: string) {
-  const response = await api.get(`/cases/${caseId}`);
+export const getCaseById = async (id: string) => {
+  const response = await api.get(`/cases/${id}`);
   return response.data;
-}
+};
 
 export async function updateCase(caseId: string, caseData: CaseData) {
   const response = await api.put(`/cases/${caseId}`, caseData);
@@ -152,7 +149,6 @@ export async function createClient(clientData: {
 }
 
 export async function createStaff(staffData: {
-  employeeId: string;
   name: string;
   role: string;
   status: string;
@@ -374,6 +370,11 @@ export async function uploadCaseDocument(formData: FormData) {
   return response.data;
 }
 
+export const getCaseActivities = async (caseId: string) => {
+  const response = await api.get(`/case-activities/${caseId}`);
+  return response.data;
+};
+
 export async function submitIntakeForm(intakeData: any) {
   const response = await api.post("/intake", intakeData);
   return response.data;
@@ -381,6 +382,15 @@ export async function submitIntakeForm(intakeData: any) {
 
 export async function getYouthProfile(caseId: string) {
   const response = await api.get(`/intake/youth-profile/${caseId}`);
+  return response.data;
+}
+
+export async function updateYouthProfile(caseId: string, youthProfileData: any) {
+  const response = await api.put(
+    `/intake/youth-profile/${caseId}`,
+    youthProfileData
+  );
+
   return response.data;
 }
 
@@ -433,3 +443,12 @@ export async function getReportExecutiveSummary() {
   const response = await api.get("/reports/executive-summary");
   return response.data;
 }
+
+
+export const generateAISummary = async (caseId: string) => {
+  const response = await api.post(`/cases/${caseId}/ai-summary`, {
+    createdBy: "Employee",
+  });
+
+  return response.data;
+};

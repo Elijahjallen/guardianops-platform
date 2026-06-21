@@ -166,4 +166,142 @@ router.get("/youth-profile/:caseId", async (req, res) => {
   }
 });
 
+router.put("/youth-profile/:caseId", async (req, res) => {
+  try {
+    const caseId = String(req.params.caseId);
+
+    const existingCase = await prisma.case.findUnique({
+      where: {
+        id: caseId,
+      },
+    });
+
+    if (!existingCase) {
+      return res.status(404).json({
+        message: "Case not found",
+      });
+    }
+
+    const {
+      firstName,
+      middleName,
+      lastName,
+      preferredName,
+      dateOfBirth,
+      gender,
+      identifiesNonBinary,
+      identifiesTransgender,
+      pronouns,
+      autismSpectrumDisorder,
+      autismSpectrumLevel,
+      height,
+      weight,
+      hairColor,
+      eyeColor,
+      marks,
+      likes,
+      dislikes,
+      participatingBehavior,
+      impulsiveBehavior,
+      siblingsInHome,
+      familyDynamics,
+      bedroomLayout,
+      sportsOrHobbies,
+      athleticLevel,
+      custody,
+      biologicalOrAdopted,
+    } = req.body;
+
+    if (!firstName || !lastName || !dateOfBirth || !gender) {
+      return res.status(400).json({
+        message: "First name, last name, date of birth, and gender are required.",
+      });
+    }
+
+    const updatedYouthProfile = await prisma.youthProfile.upsert({
+      where: {
+        caseId,
+      },
+      update: {
+        firstName,
+        middleName: middleName || null,
+        lastName,
+        preferredName: preferredName || null,
+        dateOfBirth: new Date(dateOfBirth),
+        gender,
+        identifiesNonBinary: Boolean(identifiesNonBinary),
+        identifiesTransgender: Boolean(identifiesTransgender),
+        pronouns: pronouns || null,
+        autismSpectrumDisorder: Boolean(autismSpectrumDisorder),
+        autismSpectrumLevel: autismSpectrumLevel || null,
+        height: height || null,
+        weight: weight || null,
+        hairColor: hairColor || null,
+        eyeColor: eyeColor || null,
+        marks: marks || null,
+        likes: likes || null,
+        dislikes: dislikes || null,
+        participatingBehavior: participatingBehavior || null,
+        impulsiveBehavior: impulsiveBehavior || null,
+        siblingsInHome: siblingsInHome || null,
+        familyDynamics: familyDynamics || null,
+        bedroomLayout: bedroomLayout || null,
+        sportsOrHobbies: sportsOrHobbies || null,
+        athleticLevel: athleticLevel || null,
+        custody: custody || null,
+        biologicalOrAdopted: biologicalOrAdopted || null,
+      },
+      create: {
+        caseId,
+        caseNumber: existingCase.caseNumber,
+        firstName,
+        middleName: middleName || null,
+        lastName,
+        preferredName: preferredName || null,
+        dateOfBirth: new Date(dateOfBirth),
+        gender,
+        identifiesNonBinary: Boolean(identifiesNonBinary),
+        identifiesTransgender: Boolean(identifiesTransgender),
+        pronouns: pronouns || null,
+        autismSpectrumDisorder: Boolean(autismSpectrumDisorder),
+        autismSpectrumLevel: autismSpectrumLevel || null,
+        height: height || null,
+        weight: weight || null,
+        hairColor: hairColor || null,
+        eyeColor: eyeColor || null,
+        marks: marks || null,
+        likes: likes || null,
+        dislikes: dislikes || null,
+        participatingBehavior: participatingBehavior || null,
+        impulsiveBehavior: impulsiveBehavior || null,
+        siblingsInHome: siblingsInHome || null,
+        familyDynamics: familyDynamics || null,
+        bedroomLayout: bedroomLayout || null,
+        sportsOrHobbies: sportsOrHobbies || null,
+        athleticLevel: athleticLevel || null,
+        custody: custody || null,
+        biologicalOrAdopted: biologicalOrAdopted || null,
+      },
+    });
+
+    await prisma.caseActivity.create({
+      data: {
+        caseId,
+        caseNumber: existingCase.caseNumber,
+        title: "Youth Profile Updated",
+        description: `Youth profile was updated for ${firstName} ${lastName}.`,
+        createdBy: "System",
+      },
+    });
+
+    res.json(updatedYouthProfile);
+  } catch (error) {
+    console.error("Failed to update youth profile:", error);
+
+    res.status(500).json({
+      message: "Failed to update youth profile",
+    });
+  }
+});
+
 export default router;

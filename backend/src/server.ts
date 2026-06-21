@@ -14,6 +14,8 @@ import messageRoutes from "./routes/messageRoutes";
 import path from "path";
 import documentRoutes from "./routes/documentRoutes";
 import intakeRoutes from "./routes/intakeRoutes";
+import auditRoutes from "./routes/auditRoutes";
+import reportRoutes from "./routes/reportRoutes";
 
 dotenv.config();
 
@@ -46,12 +48,16 @@ app.use("/api/parent", parentRoutes);
 
 app.use("/api/messages", messageRoutes);
 
-app.use("/api/case-activity", caseActivityRoutes);
+app.use("/api/case-activities", caseActivityRoutes);
+
+app.use("/api/audit-logs", auditRoutes);
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/api/documents", documentRoutes);
 
 app.use("/api/intake", intakeRoutes);
+
+app.use("/api/reports", reportRoutes);
 
 app.get("/", (_req, res) => {
   res.send("GuardianOps API Running");
